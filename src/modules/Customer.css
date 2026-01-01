@@ -1,0 +1,14 @@
+.view-table-title {
+  color: rgb(230, 229, 238);
+  -webkit-background-clip: text;
+  /* -webkit-text-fill-color: transparent; */
+  animation: titleAnimi 2s ease-in-out 0.2s infinite alternate;
+}
+@keyframes titleAnimi {
+  from {
+    background: linear-gradient(90deg, #6771e6ff, #c6c9e7ff);
+  }
+  to {
+    background: linear-gradient(270deg, #6771e6ff, #c6c9e7ff);
+  }
+}
