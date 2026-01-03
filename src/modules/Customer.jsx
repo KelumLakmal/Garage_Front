@@ -577,7 +577,7 @@ const Customer = () => {
             </Paper>
           </Grid>
           <Grid size={{ md: 4, xs: 12 }}>
-            <Paper sx={{ p: 2}}>
+            <Paper sx={{ p: 2 }}>
               <Typography variant="h4" gutterBottom
 
               >Customer Search</Typography>
