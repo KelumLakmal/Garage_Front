@@ -30,7 +30,7 @@ const ConfirmDialog = ({
                         variant="outlined"
                         color="success"
                         onClick={onConfirm}
-                        autoFocus
+                        // autoFocus
                     >
                         Yes
                     </Button>

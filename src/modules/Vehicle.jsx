@@ -1,6 +1,6 @@
 import { Backdrop, Box, Button, CircularProgress, FormControl, FormHelperText, Grid, inputAdornmentClasses, InputLabel, MenuItem, Paper, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Typography } from '@mui/material'
 import { Formik } from 'formik';
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import brandService from '../api/brandService';
 import { useEffect } from 'react';
 import { getAllCustomers } from '../api/customerService';
@@ -19,15 +19,21 @@ const Vehicle = () => {
         plateNumber: "",
         model: "",
         brandId: 0,
-        customerId: 0
+        customerId: 0,
+        image: null
     });
 
+    const fileInputRef = useRef(null);
+
     const [vehicles, setVehicles] = useState([]);
+    const [selectedVehicle, setSelectedVehicle] = useState(null);
 
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
+
+    const [preview, setPreview] = useState(null);
 
     const handleSnackbarClose = () => {
         setSnackbarOpen(false);
@@ -86,9 +92,9 @@ const Vehicle = () => {
         fetchVehicles(null);
     }, []);
 
-    useEffect(() => {
-        console.log("Vehicke", vehicle);
-    }, [vehicle]);
+    // useEffect(() => {
+    //     console.log("Vehicke", vehicle);
+    // }, [vehicle]);
 
     const {
         isOpen,
@@ -101,20 +107,54 @@ const Vehicle = () => {
 
     } = useConfirmDialog();
 
+    const handleRowClick = (vehicle) => {
+        console.log("Clicked", vehicle);
+        const seletedVehicleCustomObject = {
+            id: vehicle.id,
+            plateNumber: vehicle.plateNumber,
+            model: vehicle.model,
+            brandId: vehicle.brand.id,
+            customerId: vehicle.customer.id
+        };
+        setPreview(vehicle?.imageUrl);
+        setVehicle(seletedVehicleCustomObject);
+        setSelectedVehicle(seletedVehicleCustomObject);
+    }
+
     const handleSave = (values, formikActions) => {
         console.log("Form Values", values);
         openDialog(ACTIONS.ADD, values, formikActions, "save vehicle:");
     }
 
-    const handleUpdate = () => {
-
+    const handleUpdate = (values, formikActions) => {
+        openDialog(ACTIONS.UPDATE, values, formikActions, "update vehicle:");
     }
 
-    const handleDelete = () => {
-
+    const handleDelete = (values, formikActions) => {
+        openDialog(ACTIONS.DELETE, values, formikActions, "delete vehicle:");
     }
 
-    const handleClearForm = () => {
+    const handleClearForm = (resetForm) => {
+        console.log("clera");
+
+        if (preview) {
+            URL.revokeObjectURL(preview);
+        }
+        setVehicle({
+            id: 0,
+            plateNumber: "",
+            model: "",
+            brandId: 0,
+            customerId: 0,
+            image: null
+        });
+        if (resetForm) resetForm();
+        setPreview(null);
+        setSelectedVehicle(null);
+
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
 
     }
 
@@ -122,34 +162,114 @@ const Vehicle = () => {
         if (actionType === ACTIONS.ADD) {
             await confirmSave(pendingValues, pendingActions);
         }
+        if (actionType === ACTIONS.UPDATE) {
+            await confirmUpdate(pendingValues, pendingActions);
+        }
+        if (actionType === ACTIONS.DELETE) {
+            await confirmDelete(pendingValues, pendingActions);
+        }
 
     }
 
     const confirmSave = async (pendingValues, pendingActions) => {
         if (!pendingValues) return;
 
-        const vehicleSaveModel = {
-            plateNumber: pendingValues.plateNumber,
-            model: pendingValues.model,
-            brandId: pendingValues.brandId,
-            customerId: pendingValues.customerId
-        };
+        const formData = new FormData();
+
+        formData.append("plateNumber", pendingValues.plateNumber);
+        formData.append("model", pendingValues.model);
+        formData.append("brandId", pendingValues.brandId);
+        formData.append("customerId", pendingValues.customerId);
+
+        if (pendingValues.image) {
+            formData.append("image", pendingValues.image);
+        }
+
+        // const vehicleSaveModel = {
+        //     plateNumber: pendingValues.plateNumber,
+        //     model: pendingValues.model,
+        //     brandId: pendingValues.brandId,
+        //     customerId: pendingValues.customerId
+        // };
 
         try {
             setLoading(true);
-            const response = await vehicleService.saveVehicle(vehicleSaveModel);
+            const response = await vehicleService.saveVehicle(formData);
             console.log("VehicleSaveResponse", response);
             if (response.status === 201 && response.data !== null) {
                 setSnackbarMessage(`Vehicle ${pendingValues.plateNumber} saved successfully...`);
                 setSnackbarOpen(true);
                 await fetchVehicles(null);
                 setPage(0);
-                pendingActions?.resetForm();
+                handleClearForm(pendingActions.resetForm);
+                // pendingActions?.resetForm();
             }
         } catch (err) {
             console.error("Vehicle save failed:", err);
         } finally {
             console.log("FINAL");
+            setLoading(false);
+            closeDialog();
+        }
+    }
+
+    const confirmUpdate = async (pendingValues, pendingActions) => {
+        if (!pendingValues) return;
+
+        const formData = new FormData();
+        formData.append("plateNumber", pendingValues.plateNumber);
+        formData.append("model", pendingValues.model);
+        formData.append("brandId", pendingValues.brandId);
+        formData.append("customerId", pendingValues.customerId);
+
+        if (pendingValues.image) {
+            formData.append("image", pendingValues.image);
+        } 
+
+        // const vehicleUpdateModel = {
+        //     plateNumber: pendingValues.plateNumber,
+        //     model: pendingValues.model,
+        //     brandId: pendingValues.brandId,
+        //     customerId: pendingValues.customerId
+        // };
+        const vehicleId = pendingValues.id;
+        try {
+            setLoading(true);
+            const response = await vehicleService.updateVehicle(vehicleId, formData);
+            console.log("Vehicle-Update", response);
+            if (response.data !== null) {
+                setSnackbarMessage(`Vehicle ${pendingValues?.plateNumber} updated successfully...`);
+                setSnackbarOpen(true);
+                await fetchVehicles(null);
+                setPage(0);
+                handleClearForm(pendingActions?.resetForm);
+            }
+        } catch (err) {
+            console.error("Vehicle update failed:", err);
+        } finally {
+            setLoading(false);
+            closeDialog();
+        }
+    }
+
+    const confirmDelete = async (pendingValues, pendingActions) => {
+        if (!pendingValues) return;
+
+        const deletedId = pendingValues.id;
+        try {
+            setLoading(true);
+            const response = await vehicleService.deleteVehicle(deletedId);
+            console.log("Vehicle-delete-Response", response);
+            if (response.data !== null) {
+                setSnackbarMessage(`Vehicle ${pendingValues?.plateNumber} deleted successfully...`);
+                setSnackbarOpen(true);
+                await fetchVehicles(null);
+                setPage(0);
+                handleClearForm();
+            }
+        } catch (err) {
+            console.error("Vehicle delete failed:", err);
+        } finally {
             setLoading(false);
             closeDialog();
         }
@@ -215,6 +335,7 @@ const Vehicle = () => {
                                     errors,
                                     touched,
                                     formikActions,
+                                    resetForm,
                                     handleChange,
                                     handleBlur,
                                     handleSubmit,
@@ -318,7 +439,7 @@ const Vehicle = () => {
                                                     >
                                                         <MenuItem value={0} disabled>Pick a customer</MenuItem>
                                                         {customers.map((customer) => (
-                                                            <MenuItem key={customer.key} value={customer.id} >
+                                                            <MenuItem key={customer.id} value={customer.id} >
                                                                 <Box sx={{ display: 'flex', gap: 1, flexDirection: 'row' }}>
                                                                     <Typography fontWeight={500}>
                                                                         {customer.name}
@@ -341,29 +462,84 @@ const Vehicle = () => {
                                             </Grid>
 
                                             <Grid size={{ md: 12, xs: 12 }}>
+                                                <Button variant='outlined' component='label' size='small'>
+                                                    Upload image
+                                                    <input
+                                                        ref={fileInputRef}
+                                                        type='file'
+                                                        hidden
+                                                        accept='image/*'
+                                                        onChange={(event) => {
+                                                            const file = event.currentTarget.files[0];
+                                                            if (!file) return;
+                                                            if (preview) {
+                                                                URL.revokeObjectURL(preview);
+                                                            }
+                                                            console.log("ImageFile:", file);
+                                                            setFieldValue("image", file);
+                                                            console.log("URL", URL.createObjectURL(file));
+                                                            setPreview(URL.createObjectURL(file));
+                                                        }}
+                                                    />
+                                                </Button>
+                                            </Grid>
+                                            <Grid size={{ md: 6, xs: 6 }}>
+                                                {preview && (
+                                                    <Box sx={{
+                                                        // width: 200,
+                                                        // height: 100,
+                                                        // border: '2px solid red'
+                                                    }}
+                                                    >
+                                                        <img
+                                                            src={preview}
+                                                            alt='Vehicle Image'
+                                                            style={{
+                                                                width: '100%',
+                                                                height: 'auto',
+                                                                objectFit: 'contain',
+                                                                borderRadius: '8px',
+                                                                // filter: 'drop-shadow(2px 2px 5px black)'
+                                                            }}
+                                                        />
+                                                    </Box>
+                                                )}
+
+                                            </Grid>
+
+
+
+                                            <Grid size={{ md: 12, xs: 12 }}>
                                                 <Stack spacing={1} direction="row">
                                                     <Button
                                                         variant='contained'
                                                         sx={{ width: 120 }}
                                                         type='submit'
+                                                        disabled={selectedVehicle}
                                                     >
                                                         Add
                                                     </Button>
                                                     <Button
                                                         variant='contained'
                                                         sx={{ width: 120 }}
+                                                        disabled={!selectedVehicle}
+                                                        onClick={() => handleUpdate(values, formikActions)}
                                                     >
                                                         Update
                                                     </Button>
                                                     <Button
                                                         variant='contained'
                                                         sx={{ width: 120 }}
+                                                        disabled={!selectedVehicle}
+                                                        onClick={() => handleDelete(values, formikActions)}
                                                     >
                                                         Delete
                                                     </Button>
                                                     <Button
                                                         variant='contained'
                                                         sx={{ width: 120 }}
+                                                        onClick={() =>
+                                                            handleClearForm(resetForm)}
                                                     >
                                                         Clear
                                                     </Button>
@@ -406,6 +582,19 @@ const Vehicle = () => {
                                             <TableRow
                                                 key={vehicle.id}
                                                 hover
+                                                onClick={() => handleRowClick(vehicle)}
+                                                selected={selectedVehicle?.id === vehicle.id}
+                                                sx={{
+                                                    cursor: 'pointer',
+                                                    "&.Mui-selected": {
+                                                        backgroundColor: "##daf2eaff",
+                                                        transition: "background-color 0.3s linear",
+                                                    },
+                                                    "&.Mui-selected:hover": {
+                                                        backgroundColor: "#daf2eaff",
+                                                    }
+
+                                                }}
                                             >
                                                 <TableCell>{vehicle.plateNumber}</TableCell>
                                                 <TableCell>{vehicle.brand.name}</TableCell>
