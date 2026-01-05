@@ -1,4 +1,4 @@
-import { Backdrop, Box, Button, CircularProgress, FormControl, FormHelperText, Grid, inputAdornmentClasses, InputLabel, MenuItem, Paper, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Typography } from '@mui/material'
+import { Alert, Backdrop, Box, Button, CircularProgress, FormControl, FormHelperText, Grid, inputAdornmentClasses, InputLabel, MenuItem, Paper, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Typography } from '@mui/material'
 import { Formik } from 'formik';
 import React, { useRef, useState } from 'react'
 import brandService from '../api/brandService';
@@ -34,6 +34,7 @@ const Vehicle = () => {
     const [rowsPerPage, setRowsPerPage] = useState(5);
 
     const [preview, setPreview] = useState(null);
+    const [filterText, setFilterText] = useState("");
 
     const handleSnackbarClose = () => {
         setSnackbarOpen(false);
@@ -224,7 +225,7 @@ const Vehicle = () => {
 
         if (pendingValues.image) {
             formData.append("image", pendingValues.image);
-        } 
+        }
 
         // const vehicleUpdateModel = {
         //     plateNumber: pendingValues.plateNumber,
@@ -265,7 +266,7 @@ const Vehicle = () => {
                 setSnackbarOpen(true);
                 await fetchVehicles(null);
                 setPage(0);
-                handleClearForm();
+                handleClearForm(pendingActions?.resetForm);
             }
         } catch (err) {
             console.error("Vehicle delete failed:", err);
@@ -275,11 +276,39 @@ const Vehicle = () => {
         }
     }
 
+    const handleSearch = async (values) => {
+        console.log("SeachVales", values);
+        const paramObject = Object.fromEntries(Object.entries(values).filter(([_, v]) => v !== null && v !== undefined && (
+            (typeof v === "number" && v > 0) || (typeof v === "string" && v.trim() !== "")
+        )));
+
+        console.log("FinalObject", paramObject);
+        await fetchVehicles(paramObject);
+        setPage(0);
+    }
+    const handleSearchClear = async (resetForm) => {
+        resetForm();
+        await fetchVehicles(null);
+        setFilterText("");
+        setPage(0);
+
+    }
+
+    const filteredVehicles = vehicles.filter((vehicle) => {
+        const search = filterText.trim().toLowerCase();
+
+        return (vehicle.plateNumber?.toLowerCase().includes(search) ||
+            vehicle.brand.name?.toLowerCase().includes(search) ||
+            vehicle.model?.toLowerCase().includes(search) ||
+            vehicle.customer.name?.toLowerCase().includes(search)
+        );
+    });
+
 
     const validationSchema = Yup.object({
         plateNumber: Yup.string().required("Plate No is required"),
         brandId: Yup.number().required("Brand is required").moreThan(0, "Please select brand"),
-        customerId: Yup.number().required("Customer is required").moreThan(0, "Please select customer"),
+        customerId: Yup.number().required("Customer is required").moreThan(0, "Please select owner"),
         model: Yup.string().trim().required("Model is required"),
 
     });
@@ -321,7 +350,16 @@ const Vehicle = () => {
                 <Grid container rowSpacing={2} columnSpacing={1}>
                     <Grid size={{ md: 8, xs: 12 }}>
                         <Paper sx={{ p: 2 }}>
-                            <Typography variant='h4' gutterBottom>
+                            <Typography variant='h6' gutterBottom
+                                sx={{
+                                    background: 'linear-gradient(120deg, #10097cff, #b3b5e8ff)',
+                                    padding: 1,
+                                    color: "#fff",
+                                    mb: 2,
+                                    borderRadius: "5px"
+                                }}
+
+                            >
                                 Vehicle Form
                             </Typography>
                             <Formik
@@ -345,6 +383,7 @@ const Vehicle = () => {
                                         <Grid container spacing={2}>
                                             <Grid size={{ md: 12, xs: 12 }}>
                                                 <TextField
+                                                    // size='small'
                                                     name='plateNumber'
                                                     variant='outlined'
                                                     label='Plate No *'
@@ -554,16 +593,179 @@ const Vehicle = () => {
                     </Grid>
                     <Grid size={{ md: 4, xs: 12 }}>
                         <Paper sx={{ p: 2 }}>
-                            <Typography variant='h4'>
+                            <Typography variant='h6' gutterBottom
+                                sx={{
+                                    background: 'linear-gradient(120deg, #10097cff, #b3b5e8ff)',
+                                    padding: 1,
+                                    color: "#fff",
+                                    mb: 2,
+                                    borderRadius: "5px"
+                                }}
+                            >
                                 Vehicle Search
                             </Typography>
+                            <Formik
+                                initialValues={{
+                                    plateNumber: "",
+                                    brandId: 0,
+                                    customerId: 0
+                                }}
+                                onSubmit={handleSearch}
+
+                            >
+                                {({
+                                    values,
+                                    setFieldValue,
+                                    handleBlur,
+                                    handleChange,
+                                    handleSubmit,
+                                    resetForm
+
+                                }) => {
+                                    const isBtnSearchDisabled = !Object.values(values).some((v) =>
+                                        (typeof v === "string" && v.trim() !== "") || (typeof v === "number" && v > 0)
+                                    );
+
+                                    return (<form onSubmit={handleSubmit}>
+                                        <Grid container spacing={2}>
+                                            <Grid size={{ md: 12, xs: 12 }}>
+                                                <TextField
+                                                    name='plateNumber'
+                                                    variant='outlined'
+                                                    label='Plate No'
+                                                    value={values.plateNumber}
+                                                    onChange={(e) =>
+                                                        setFieldValue(
+                                                            "plateNumber",
+                                                            e.target.value.replace(/^\s+/, ""))}
+                                                    onBlur={(e) => {
+                                                        handleBlur(e);
+                                                        setFieldValue(
+                                                            "plateNumber",
+                                                            e.target.value.trim()
+                                                        );
+                                                    }}
+                                                    fullWidth
+                                                />
+                                            </Grid>
+                                            <Grid size={{ md: 12, xs: 12 }}>
+                                                <FormControl variant='outlined' fullWidth>
+                                                    <InputLabel id='brandId' >Select a Brand </InputLabel>
+                                                    <Select
+                                                        labelId='brandId'
+                                                        label='Select a Brand '
+                                                        name='brandId'
+                                                        value={values.brandId || ''}
+                                                        onChange={handleChange}
+                                                        onBlur={handleBlur}
+                                                    >
+                                                        <MenuItem value={0} disabled>Pick a brand</MenuItem>
+                                                        {brands.map((brand) => (
+
+                                                            <MenuItem key={brand.id} value={brand.id}>
+                                                                {brand.name}
+                                                            </MenuItem>
+                                                        )
+                                                        )}
+
+                                                    </Select>
+                                                </FormControl>
+                                            </Grid>
+                                            <Grid size={{ md: 12, xs: 12 }}>
+                                                <FormControl variant='outlined' fullWidth>
+                                                    <InputLabel id='customerId' >Select a Owner </InputLabel>
+                                                    <Select
+                                                        labelId='customerId'
+                                                        label='Select a Owner '
+                                                        name='customerId'
+                                                        value={values.customerId || ''}
+                                                        onChange={handleChange}
+                                                        onBlur={handleBlur}
+                                                        renderValue={(selected) => {
+                                                            var customer = customers.find(c => c.id == selected);
+                                                            return customer ? `${customer.name} (NIC: ${customer.nic})` : "";
+                                                        }}
+                                                    >
+                                                        <MenuItem value={0} disabled>Pick a Owner</MenuItem>
+                                                        {customers.map((customer) => (
+
+                                                            <MenuItem key={customer.id} value={customer.id}>
+                                                                <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1 }}>
+                                                                    <Typography fontWeight={500}>{customer.name}</Typography>
+                                                                    <Typography color='text.secondary'>{customer.nic}</Typography>
+                                                                </Box>
+                                                            </MenuItem>
+                                                        )
+                                                        )}
+                                                    </Select>
+                                                </FormControl>
+                                            </Grid>
+                                            <Grid size={{ md: 12, xs: 12 }}>
+                                                <Stack direction={'row'} spacing={1}>
+                                                    <Button
+                                                        sx={{
+                                                            width: 120
+                                                        }}
+                                                        variant='contained'
+                                                        type='submit'
+                                                        disabled={isBtnSearchDisabled}
+                                                    >
+                                                        Search
+                                                    </Button>
+                                                    <Button
+                                                        sx={{
+                                                            width: 120
+                                                        }}
+                                                        variant='contained'
+                                                        onClick={async () => await handleSearchClear(resetForm)}
+                                                    >
+                                                        Clear
+                                                    </Button>
+                                                </Stack>
+
+                                            </Grid>
+
+                                        </Grid>
+                                    </form>);
+                                }
+                                }
+                            </Formik>
                         </Paper>
                     </Grid>
                     <Grid size={{ md: 12, xs: 12 }}>
-                        <Paper sx={{ p: 2 }}>
-                            <Typography variant='h4'>
+                        <Paper sx={{ p: 0 }}>
+                            <Typography variant='h6' gutterBottom
+                                sx={{
+                                    background: 'linear-gradient(120deg, #10097cff, #b3b5e8ff)',
+                                    padding: 1,
+                                    color: "#fff",
+                                    mb: 2,
+                                    borderRadius: "5px"
+                                }}
+                            >
                                 Vehicle Details
                             </Typography>
+                            <Box textAlign='right'>
+                                <TextField
+                                    label="Search By Table Results"
+                                    variant='outlined'
+                                    placeholder="Enter search values"
+                                    size='small'
+                                    sx={{
+                                        width: '20%',
+                                        "& .MuiInputBase-input": {
+                                            padding: "8px 8px", // reduce input padding
+                                            fontSize: "1rem", // smaller font
+                                        },
+                                        align: 'right'
+                                    }}
+                                    onChange={(e) => {
+                                        setFilterText(e.target.value.trim());
+                                        setPage(0);
+                                    }}
+                                    value={filterText}
+                                />
+                            </Box>
                             <TableContainer>
                                 <Table>
                                     <TableHead>
@@ -575,7 +777,71 @@ const Vehicle = () => {
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
-                                        {vehicles.slice(
+                                        {filteredVehicles.length ? filteredVehicles.slice(
+                                            page * rowsPerPage,
+                                            page * rowsPerPage + rowsPerPage
+                                        ).map((vehicle) => (
+                                            <TableRow
+                                                key={vehicle.id}
+                                                hover
+                                                onClick={() => handleRowClick(vehicle)}
+                                                selected={selectedVehicle?.id === vehicle.id}
+                                                sx={{
+                                                    cursor: 'pointer',
+                                                    "&.Mui-selected": {
+                                                        backgroundColor: "##daf2eaff",
+                                                        transition: "background-color 0.3s linear",
+                                                    },
+                                                    "&.Mui-selected:hover": {
+                                                        backgroundColor: "#daf2eaff",
+                                                    }
+
+                                                }}
+                                            >
+                                                <TableCell>{vehicle.plateNumber}</TableCell>
+                                                {/* <TableCell>{vehicle.brand.name}</TableCell> */}
+                                                {/* <TableCell><img src={vehicle.brand.brandImageUrl}  alt='brand image' style={{
+                                                    // width: '150px',
+                                                    height: '20px',
+                                                    objectFit: 'contain'
+
+                                                }}/></TableCell> */}
+                                                <TableCell>
+
+                                                    <Box
+
+                                                        component={'img'}
+                                                        src={vehicle.brand.brandImageUrl}
+                                                        alt={`${vehicle.brand.name}-logo`}
+                                                        sx={{
+                                                            height: 30,
+                                                            width: 40,
+                                                            objectFit: 'contain'
+                                                        }}
+                                                    />
+
+
+                                                </TableCell>
+                                                <TableCell>{vehicle.model}</TableCell>
+                                                <TableCell>{vehicle.customer.name}</TableCell>
+                                            </TableRow>
+                                        )) : (
+                                            <TableRow>
+                                                <TableCell colSpan={4}>
+                                                    <Alert severity='warning'
+                                                        sx={{ justifyContent: 'center', }}
+                                                    >
+                                                        <Typography align='center'>
+                                                            No records to display.
+                                                        </Typography>
+                                                    </Alert>
+
+                                                </TableCell>
+                                            </TableRow>
+
+                                        )}
+
+                                        {/* {vehicles.slice(
                                             page * rowsPerPage,
                                             page * rowsPerPage + rowsPerPage
                                         ).map((vehicle) => (
@@ -601,13 +867,13 @@ const Vehicle = () => {
                                                 <TableCell>{vehicle.model}</TableCell>
                                                 <TableCell>{vehicle.customer.name}</TableCell>
                                             </TableRow>
-                                        ))}
+                                        ))} */}
 
                                     </TableBody>
                                 </Table>
                                 <TablePagination
                                     component={"div"}
-                                    count={vehicles.length}
+                                    count={filteredVehicles.length}
                                     page={page}
                                     onPageChange={(event, newPage) => setPage(newPage)}
                                     rowsPerPage={rowsPerPage}
