@@ -31,7 +31,7 @@ const Mainwindow = () => {
         >
           <Toolbar>
             <Typography variant="h6" noWrap component="div">
-              Clipped drawer
+              Welcome Back...
             </Typography>
           </Toolbar>
         </AppBar>
@@ -50,7 +50,7 @@ const Mainwindow = () => {
           <Box sx={{ overflow: "auto" }}>
             <List>
               <ListItem disablePadding>
-                <ListItemButton component={Link} to="/student">
+                <ListItemButton component={Link} to="/main/home">
                     <ListItemIcon>
                         <InboxIcon/>
                     </ListItemIcon>
@@ -58,7 +58,15 @@ const Mainwindow = () => {
                 </ListItemButton>
               </ListItem>
               <ListItem disablePadding>
-                <ListItemButton component={Link} to="/customer">
+                <ListItemButton component={Link} to="/main/student">
+                    <ListItemIcon>
+                        <InboxIcon/>
+                    </ListItemIcon>
+                    <ListItemText primary= "Home2" />
+                </ListItemButton>
+              </ListItem>
+              <ListItem disablePadding>
+                <ListItemButton component={Link} to="/main/customer">
                     <ListItemIcon>
                         <MailIcon/>
                     </ListItemIcon>
@@ -66,7 +74,7 @@ const Mainwindow = () => {
                 </ListItemButton>
               </ListItem>
               <ListItem disablePadding>
-                <ListItemButton component={Link} to="/vehicle">
+                <ListItemButton component={Link} to="/main/vehicle">
                     <ListItemIcon>
                         <InboxIcon/>
                     </ListItemIcon>

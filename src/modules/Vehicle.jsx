@@ -9,6 +9,7 @@ import useConfirmDialog, { ACTIONS } from './useConfirmDialog';
 import ConfirmDialog from './ConfirmDialog';
 import vehicleService from '../api/vehicleService';
 import SnackbarCustom from './SnackbarCustom';
+import useImagePreview from '../utils/useImagePreview';
 
 const Vehicle = () => {
     const [loading, setLoading] = useState(false);
@@ -33,7 +34,7 @@ const Vehicle = () => {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
 
-    const [preview, setPreview] = useState(null);
+    // const [preview, setPreview] = useState(null);
     const [filterText, setFilterText] = useState("");
 
     const handleSnackbarClose = () => {
@@ -108,6 +109,14 @@ const Vehicle = () => {
 
     } = useConfirmDialog();
 
+    const {
+        file: imageFile,
+        preview,
+        handleFileChange,
+        clear: imageClear,
+        showImage
+    } = useImagePreview();
+
     const handleRowClick = (vehicle) => {
         console.log("Clicked", vehicle);
         const seletedVehicleCustomObject = {
@@ -117,7 +126,8 @@ const Vehicle = () => {
             brandId: vehicle.brand.id,
             customerId: vehicle.customer.id
         };
-        setPreview(vehicle?.imageUrl);
+        // setPreview(vehicle?.imageUrl);
+        showImage(vehicle?.imageUrl);
         setVehicle(seletedVehicleCustomObject);
         setSelectedVehicle(seletedVehicleCustomObject);
     }
@@ -138,9 +148,9 @@ const Vehicle = () => {
     const handleClearForm = (resetForm) => {
         console.log("clera");
 
-        if (preview) {
-            URL.revokeObjectURL(preview);
-        }
+        // if (preview) {
+        //     URL.revokeObjectURL(preview);
+        // }
         setVehicle({
             id: 0,
             plateNumber: "",
@@ -150,7 +160,8 @@ const Vehicle = () => {
             image: null
         });
         if (resetForm) resetForm();
-        setPreview(null);
+        // setPreview(null);
+        imageClear();
         setSelectedVehicle(null);
 
         if (fileInputRef.current) {
@@ -385,6 +396,7 @@ const Vehicle = () => {
                                                 <TextField
                                                     // size='small'
                                                     name='plateNumber'
+                                                    size="small"
                                                     variant='outlined'
                                                     label='Plate No *'
                                                     error={touched.plateNumber && Boolean(errors.plateNumber)}
@@ -405,7 +417,7 @@ const Vehicle = () => {
                                                 />
                                             </Grid>
                                             <Grid size={{ md: 12, xs: 12 }}>
-                                                <FormControl variant='outlined' fullWidth error={touched.brandId && Boolean(errors.brandId)} >
+                                                <FormControl variant='outlined' fullWidth size='small' error={touched.brandId && Boolean(errors.brandId)} >
                                                     <InputLabel id='brandId' >Select a Brand *</InputLabel>
                                                     <Select
                                                         labelId='brandId'
@@ -419,10 +431,32 @@ const Vehicle = () => {
                                                     >
                                                         <MenuItem value={0} disabled>Pick a brand</MenuItem>
                                                         {brands.map((brand) => (
-
                                                             <MenuItem key={brand.id} value={brand.id}>
-                                                                {brand.name}
+                                                                <Box sx={{
+                                                                    display: "flex",
+                                                                    flexDirection: "row",
+                                                                    // justifyContent: "space-between",
+                                                                    gap: 1
+                                                                }}>
+                                                                    <Typography>{brand.name}</Typography>
+                                                                    <Box component={'img'}
+                                                                        src={brand.brandImageUrl}
+                                                                        alt='brand logo'
+                                                                        sx={{
+                                                                            width: 30,
+                                                                            height: 'auto',
+                                                                            // ml: 10,
+                                                                            boxSizing: 'border-box',
+                                                                            objectFit: 'cover'
+                                                                        }}
+                                                                    />
+                                                                </Box>
                                                             </MenuItem>
+
+
+                                                            // <MenuItem key={brand.id} value={brand.id}>
+                                                            //     {brand.name}
+                                                            // </MenuItem>
                                                         )
                                                         )}
 
@@ -436,6 +470,7 @@ const Vehicle = () => {
                                             <Grid size={{ md: 12, xs: 12 }}>
                                                 <TextField
                                                     name='model'
+                                                    size="small"
                                                     variant='outlined'
                                                     label='Enter Model *'
                                                     error={touched.model && Boolean(errors.model)}
@@ -459,7 +494,7 @@ const Vehicle = () => {
                                             </Grid>
 
                                             <Grid size={{ md: 12, xs: 12 }}>
-                                                <FormControl variant='outlined' fullWidth
+                                                <FormControl variant='outlined' fullWidth size='small'
                                                     error={touched.customerId && Boolean(errors.customerId)}
                                                 >
                                                     <InputLabel id='customerId' >Select Owner *</InputLabel>
@@ -508,16 +543,20 @@ const Vehicle = () => {
                                                         type='file'
                                                         hidden
                                                         accept='image/*'
+                                                        // onChange={(event) => {
+                                                        //     const file = event.currentTarget.files[0];
+                                                        //     if (!file) return;
+                                                        //     if (preview) {
+                                                        //         URL.revokeObjectURL(preview);
+                                                        //     }
+                                                        //     console.log("ImageFile:", file);
+                                                        //     setFieldValue("image", file);
+                                                        //     console.log("URL", URL.createObjectURL(file));
+                                                        //     setPreview(URL.createObjectURL(file));
+                                                        // }}
                                                         onChange={(event) => {
-                                                            const file = event.currentTarget.files[0];
-                                                            if (!file) return;
-                                                            if (preview) {
-                                                                URL.revokeObjectURL(preview);
-                                                            }
-                                                            console.log("ImageFile:", file);
-                                                            setFieldValue("image", file);
-                                                            console.log("URL", URL.createObjectURL(file));
-                                                            setPreview(URL.createObjectURL(file));
+                                                            handleFileChange(event);
+                                                            setFieldValue("image", event.target.files[0]);
                                                         }}
                                                     />
                                                 </Button>
@@ -530,7 +569,18 @@ const Vehicle = () => {
                                                         // border: '2px solid red'
                                                     }}
                                                     >
-                                                        <img
+                                                        <Box
+                                                            component={'img'}
+                                                            src={preview}
+                                                            alt='Vehicle Image'
+                                                            sx={{
+                                                                width: '100%',
+                                                                height: 'auto',
+                                                                objectFit: 'contain',
+                                                                borderRadius: 5
+                                                            }}
+                                                        />
+                                                        {/* <img
                                                             src={preview}
                                                             alt='Vehicle Image'
                                                             style={{
@@ -540,7 +590,7 @@ const Vehicle = () => {
                                                                 borderRadius: '8px',
                                                                 // filter: 'drop-shadow(2px 2px 5px black)'
                                                             }}
-                                                        />
+                                                        /> */}
                                                     </Box>
                                                 )}
 
@@ -631,6 +681,7 @@ const Vehicle = () => {
                                             <Grid size={{ md: 12, xs: 12 }}>
                                                 <TextField
                                                     name='plateNumber'
+                                                    size='small'
                                                     variant='outlined'
                                                     label='Plate No'
                                                     value={values.plateNumber}
@@ -649,12 +700,13 @@ const Vehicle = () => {
                                                 />
                                             </Grid>
                                             <Grid size={{ md: 12, xs: 12 }}>
-                                                <FormControl variant='outlined' fullWidth>
+                                                <FormControl variant='outlined' fullWidth size='small'>
                                                     <InputLabel id='brandId' >Select a Brand </InputLabel>
                                                     <Select
                                                         labelId='brandId'
                                                         label='Select a Brand '
                                                         name='brandId'
+
                                                         value={values.brandId || ''}
                                                         onChange={handleChange}
                                                         onBlur={handleBlur}
@@ -672,7 +724,7 @@ const Vehicle = () => {
                                                 </FormControl>
                                             </Grid>
                                             <Grid size={{ md: 12, xs: 12 }}>
-                                                <FormControl variant='outlined' fullWidth>
+                                                <FormControl variant='outlined' fullWidth size='small'>
                                                     <InputLabel id='customerId' >Select a Owner </InputLabel>
                                                     <Select
                                                         labelId='customerId'
@@ -800,18 +852,11 @@ const Vehicle = () => {
                                             >
                                                 <TableCell>{vehicle.plateNumber}</TableCell>
                                                 {/* <TableCell>{vehicle.brand.name}</TableCell> */}
-                                                {/* <TableCell><img src={vehicle.brand.brandImageUrl}  alt='brand image' style={{
-                                                    // width: '150px',
-                                                    height: '20px',
-                                                    objectFit: 'contain'
 
-                                                }}/></TableCell> */}
                                                 <TableCell>
-
                                                     <Box
-
                                                         component={'img'}
-                                                        src={vehicle.brand.brandImageUrl}
+                                                        src={vehicle.brand?.brandImageUrl}
                                                         alt={`${vehicle.brand.name}-logo`}
                                                         sx={{
                                                             height: 30,
@@ -819,8 +864,6 @@ const Vehicle = () => {
                                                             objectFit: 'contain'
                                                         }}
                                                     />
-
-
                                                 </TableCell>
                                                 <TableCell>{vehicle.model}</TableCell>
                                                 <TableCell>{vehicle.customer.name}</TableCell>

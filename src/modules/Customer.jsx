@@ -466,6 +466,7 @@ const Customer = () => {
                       <Grid size={{ md: 12, xs: 12 }}>
                         <TextField
                           name="name"
+                          size="small"
                           value={values.name}
                           // onChange={handleChange}
                           onChange={(e) =>
@@ -489,6 +490,7 @@ const Customer = () => {
                       <Grid size={{ md: 12, xs: 12 }}>
                         <TextField
                           name="mobile"
+                          size="small"
                           value={values.mobile}
                           // onChange={handleChange}
                           onChange={(e) => setFieldValue("mobile", e.target.value.replace(/^\s+/, ""))}
@@ -505,6 +507,7 @@ const Customer = () => {
                       <Grid size={{ md: 12, xs: 12 }}>
                         <TextField
                           name="nic"
+                          size="small"
                           value={values.nic}
                           // onChange={handleChange}
                           onChange={(e) => setFieldValue("nic", e.target.value.replace(/^\s+/, ""))}
@@ -522,6 +525,7 @@ const Customer = () => {
                       <Grid size={{ md: 12, xs: 12 }}>
                         <TextField
                           name="email"
+                          size="small"
                           value={values.email}
                           // onChange={handleChange}
                           onChange={(e) => setFieldValue("email", e.target.value.replace(/^\s+/, ""))}
@@ -604,6 +608,7 @@ const Customer = () => {
                         <Grid size={{ md: 12, xs: 12 }}>
                           <TextField
                             name="name"
+                            size="small"
                             value={values.name}
                             onBlur={(e) => {
                               // console.log("Blur");
@@ -625,6 +630,7 @@ const Customer = () => {
                         <Grid size={{ md: 12, xs: 12 }}>
                           <TextField
                             name="mobile"
+                            size="small"
                             value={values.mobile}
                             onBlur={(e) => {
                               handleBlur(e);
@@ -645,6 +651,7 @@ const Customer = () => {
                         <Grid size={{ md: 12, xs: 12 }}>
                           <TextField
                             name="nic"
+                            size="small"
                             value={values.nic}
                             onBlur={(e) => {
                               handleBlur(e);
