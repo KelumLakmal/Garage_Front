@@ -3,24 +3,51 @@ import React from 'react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import bgLogin from '../assets/bglog2.jpeg';
+import loginService from '../api/loginService';
 
-const Login = ({ onLogin }) => {
+import { useAuth } from '../auth/AuthContext';
+
+const Login = () => {
+
     const [userName, setUserName] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState(null);
     const navigate = useNavigate();
 
-    const handleLogin = () => {
-        if (userName === 'admin' && password === '1234') {
-            console.log("Success");
+    const { logIn } = useAuth();
+
+    const handleLogin = async () => {
+        const loginData = {
+            userName: userName,
+            password: password
+        };
+        
+        try {
             setError(null);
-            onLogin();
-            navigate('/main');
-        }
-        else {
-            setError("Invalid username or password");
+            const response = await loginService.login(loginData);
+            logIn(response.data);
+            navigate("/main", { replace: true });
+            console.log("USerLogResponse", response);
+            
+        } catch (error) {
+            setError("Invalid credentials");
+            console.error("LoginError", error);
+            
         }
     }
+
+    // const handleLogin = () => {
+    //     if (userName === 'admin' && password === '1234') {
+    //         console.log("Success");
+    //         setError(null);
+    //         onLogin();
+
+    //         navigate('/main');
+    //     }
+    //     else {
+    //         setError("Invalid username or password");
+    //     }
+    // }
     const handleClear = () => {
         setUserName(""),
         setPassword("");
@@ -142,7 +169,7 @@ const Login = ({ onLogin }) => {
                             // color='primary'
                             size='small'
                             disabled={!userName || !password}
-                            onClick={handleLogin}
+                            onClick={ async () => await handleLogin()}
                             sx={{
                                 textTransform: "none",
                                 fontSize: "14px",

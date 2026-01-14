@@ -8,31 +8,32 @@ import Login from "./modules/Login";
 import { useState } from "react";
 import ProtectedRoute from "./utils/ProtectedRoute";
 import Home from "./modules/Home";
+import { AuthProvider } from "./auth/AuthContext";
 function App() {
   const [isAuthnticate, setIsAuthnticate] = useState(false);
 
   return (
     <>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Login onLogin={() => setIsAuthnticate(true)} />} />
-          <Route path="/main" element={<ProtectedRoute isAuthenticated={true}>
-            <Mainwindow />
-          </ProtectedRoute>}>
-            {/* default route*/}
-            <Route index element={<Home />} />
-            <Route path="home" element={<Navigate to='/main' replace/>} />
-            <Route path="student" element={<Student />} />
-            <Route path="customer" element={<Customer />} />
-            <Route path="vehicle" element={<Vehicle />} />
-          </Route>
-          {/* for Invalid URL */}
-          <Route path="*" element={<Navigate to='/' replace/>}/>
-          
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Login />} />
+            <Route path="/main" element={<ProtectedRoute >
+              <Mainwindow />
+            </ProtectedRoute>}>
+              {/* default route*/}
+              <Route index element={<Home />} />
+              <Route path="home" element={<Navigate to='/main' replace />} />
+              <Route path="student" element={<Student />} />
+              <Route path="customer" element={<Customer />} />
+              <Route path="vehicle" element={<Vehicle />} />
+            </Route>
+            {/* for Invalid URL */}
+            <Route path="*" element={<Navigate to='/' replace />} />
+          </Routes>
+        </BrowserRouter>
 
-        </Routes>
-      </BrowserRouter>
-      {/* <BrowserRouter>
+        {/* <BrowserRouter>
         <Routes>
           <Route path="/" element={<Login />}/>
           <Route path="/main" element={<Mainwindow/>}>
@@ -42,9 +43,12 @@ function App() {
           </Route>
         </Routes>
       </BrowserRouter> */}
-      {/* <Student/> */}
-      {/* <Mainwindow/> */}
+        {/* <Student/> */}
+        {/* <Mainwindow/> */}
+      </AuthProvider>
     </>
+
+
   );
 }
 

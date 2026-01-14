@@ -1,4 +1,4 @@
-import { Alert, Backdrop, Box, Button, CircularProgress, FormControl, FormHelperText, Grid, inputAdornmentClasses, InputLabel, MenuItem, Paper, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Typography } from '@mui/material'
+import { Alert, Autocomplete, Backdrop, Box, Button, CircularProgress, FormControl, FormHelperText, Grid, inputAdornmentClasses, InputLabel, MenuItem, Paper, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Typography } from '@mui/material'
 import { Formik } from 'formik';
 import React, { useRef, useState } from 'react'
 import brandService from '../api/brandService';
@@ -10,6 +10,8 @@ import ConfirmDialog from './ConfirmDialog';
 import vehicleService from '../api/vehicleService';
 import SnackbarCustom from './SnackbarCustom';
 import useImagePreview from '../utils/useImagePreview';
+import useBtnPermission from '../utils/useBtnPermission';
+import { MultilineChart } from '@mui/icons-material';
 
 const Vehicle = () => {
     const [loading, setLoading] = useState(false);
@@ -108,6 +110,12 @@ const Vehicle = () => {
         closeDialog
 
     } = useConfirmDialog();
+
+    const {
+        btnAddEnabled,
+        btnUpdateEnabled,
+        btnDeleteEnabled
+    } = useBtnPermission("VEHICLE");
 
     const {
         file: imageFile,
@@ -417,13 +425,87 @@ const Vehicle = () => {
                                                 />
                                             </Grid>
                                             <Grid size={{ md: 12, xs: 12 }}>
-                                                <FormControl variant='outlined' fullWidth size='small' error={touched.brandId && Boolean(errors.brandId)} >
+                                                <Autocomplete
+                                                    sx={{
+                                                        width: "100%"
+                                                    }}
+                                                    options={brands}
+                                                    getOptionLabel={(option) => option.name || ""}
+                                                    onChange={(event, newValue) =>
+                                                        setFieldValue("brandId", newValue ? newValue.id : 0)
+                                                    }
+                                                    value={brands.find((b) => b.id === values.brandId) ?? null}
+                                                    renderOption={(props, option) => {
+                                                        const { key, ...rest } = props;
+                                                        return (
+                                                            <Box
+                                                                key={key}
+                                                                component="li"
+                                                                {...rest}
+                                                            >
+                                                                <Box sx={{
+                                                                    display: "flex",
+                                                                    flexDirection: "row",
+                                                                    alignItems: "center"
+                                                                }}>
+                                                                    <Typography>{option.name}</Typography>
+                                                                    <Box
+                                                                        component="img"
+                                                                        src={option?.brandImageUrl}
+                                                                        alt="brand logo"
+                                                                        sx={{
+                                                                            width: 30,
+                                                                            height: "auto",
+                                                                            boxSizing: "border-box",
+                                                                            objectFit: "cover"
+                                                                        }}
+                                                                    />
+                                                                </Box>
+
+                                                            </Box>
+                                                        )
+
+                                                    }
+
+                                                    }
+                                                    renderInput={(params) => {
+                                                        const selectedBrand = brands.find((b) => b.id === values.brandId);
+                                                        return (
+                                                            <TextField
+                                                                {...params}
+                                                                InputProps={{
+                                                                    ...params.InputProps,
+                                                                    startAdornment: selectedBrand ? (
+                                                                        <Box
+                                                                            component="img"
+                                                                            src={selectedBrand.brandImageUrl}
+                                                                            alt='brand logo'
+                                                                            sx={{
+                                                                                width: 30,
+                                                                                height: 'auto',
+                                                                                // ml: 10,
+                                                                                boxSizing: 'border-box',
+                                                                                objectFit: 'cover',
+                                                                            }}
+                                                                        />
+                                                                    ) : null
+
+
+                                                                }}
+                                                                label="Select a Brand *"
+                                                                size="small"
+
+                                                            />
+
+                                                        )
+
+                                                    }}
+                                                />
+                                                {/* <FormControl variant='outlined' fullWidth size='small' error={touched.brandId && Boolean(errors.brandId)} >
                                                     <InputLabel id='brandId' >Select a Brand *</InputLabel>
                                                     <Select
                                                         labelId='brandId'
                                                         label='Select a Brand *'
-                                                        // error={touched.brandId && Boolean(errors.brandId)}
-                                                        // helperText={touched.brandId && errors.brandId}
                                                         name='brandId'
                                                         value={values.brandId || ''}
                                                         onChange={handleChange}
@@ -435,7 +517,7 @@ const Vehicle = () => {
                                                                 <Box sx={{
                                                                     display: "flex",
                                                                     flexDirection: "row",
-                                                                    // justifyContent: "space-between",
+                                                                    // justifyContent: "center",
                                                                     gap: 1
                                                                 }}>
                                                                     <Typography>{brand.name}</Typography>
@@ -452,11 +534,6 @@ const Vehicle = () => {
                                                                     />
                                                                 </Box>
                                                             </MenuItem>
-
-
-                                                            // <MenuItem key={brand.id} value={brand.id}>
-                                                            //     {brand.name}
-                                                            // </MenuItem>
                                                         )
                                                         )}
 
@@ -464,8 +541,7 @@ const Vehicle = () => {
                                                     {touched.brandId && errors.brandId && (
                                                         <FormHelperText>{errors.brandId}</FormHelperText>
                                                     )}
-                                                    {/* <FormHelperText>Reqiuredddd</FormHelperText> */}
-                                                </FormControl>
+                                                </FormControl> */}
                                             </Grid>
                                             <Grid size={{ md: 12, xs: 12 }}>
                                                 <TextField
@@ -494,7 +570,64 @@ const Vehicle = () => {
                                             </Grid>
 
                                             <Grid size={{ md: 12, xs: 12 }}>
-                                                <FormControl variant='outlined' fullWidth size='small'
+                                                <Autocomplete
+                                                    options={customers}
+                                                    getOptionLabel={(option) => option.name || ""}
+                                                    onChange={(event, newValue) => setFieldValue("customerId", newValue ? newValue.id : 0)}
+                                                    value={customers.find((c) => c.id === values.customerId) ?? null}
+                                                    renderOption={(props, option) => {
+                                                        const { key, ...rest } = props;
+                                                        return (
+                                                            <Box
+                                                                key={key}
+                                                                component="li"
+                                                                {...rest}
+                                                            >
+                                                                <Box
+                                                                    sx={{
+                                                                        display: "flex",
+                                                                        flexDirection: "row",
+                                                                        alignItems: "center",
+                                                                        gap: 1,
+                                                                    }}
+                                                                >
+                                                                    <Typography fontWeight={500} >{option.name}</Typography>
+                                                                    <Typography color='text.secondary'>{option.nic}</Typography>
+                                                                </Box>
+
+                                                            </Box>
+                                                        )
+
+                                                    }}
+
+                                                    renderInput={(params) => {
+                                                        const selectedCustomer = customers.find((c) => c.id === values.customerId);
+                                                        return (
+                                                            <TextField
+                                                                {...params}
+                                                                label="Select Owner *"
+                                                                size='small'
+                                                                InputProps={{
+                                                                    ...params.InputProps,
+                                                                    endAdornment: selectedCustomer ? (
+                                                                        <Box
+                                                                            sx={{
+                                                                                display: "flex",
+                                                                                alignItems: "center",
+                                                                                gap: 1,
+                                                                            }}
+                                                                        >
+                                                                            <Typography color='primary' fontWeight={500}>{selectedCustomer.name}</Typography>
+                                                                            <Typography fontWeight={500} color='primary'>{'(NIC): ' + selectedCustomer.nic }</Typography>
+                                                                        </Box>
+                                                                    ) : null
+                                                                }}
+                                                            />
+                                                        )
+
+                                                    }}
+                                                />
+                                                {/* <FormControl variant='outlined' fullWidth size='small'
                                                     error={touched.customerId && Boolean(errors.customerId)}
                                                 >
                                                     <InputLabel id='customerId' >Select Owner *</InputLabel>
@@ -532,7 +665,7 @@ const Vehicle = () => {
                                                     {touched.customerId && errors.customerId && (
                                                         <FormHelperText>{errors.customerId}</FormHelperText>
                                                     )}
-                                                </FormControl>
+                                                </FormControl> */}
                                             </Grid>
 
                                             <Grid size={{ md: 12, xs: 12 }}>
@@ -604,14 +737,14 @@ const Vehicle = () => {
                                                         variant='contained'
                                                         sx={{ width: 120 }}
                                                         type='submit'
-                                                        disabled={selectedVehicle}
+                                                        disabled={selectedVehicle || !btnAddEnabled}
                                                     >
                                                         Add
                                                     </Button>
                                                     <Button
                                                         variant='contained'
                                                         sx={{ width: 120 }}
-                                                        disabled={!selectedVehicle}
+                                                        disabled={!selectedVehicle || !btnUpdateEnabled}
                                                         onClick={() => handleUpdate(values, formikActions)}
                                                     >
                                                         Update
@@ -619,7 +752,7 @@ const Vehicle = () => {
                                                     <Button
                                                         variant='contained'
                                                         sx={{ width: 120 }}
-                                                        disabled={!selectedVehicle}
+                                                        disabled={!selectedVehicle || !btnDeleteEnabled}
                                                         onClick={() => handleDelete(values, formikActions)}
                                                     >
                                                         Delete
@@ -628,7 +761,7 @@ const Vehicle = () => {
                                                         variant='contained'
                                                         sx={{ width: 120 }}
                                                         onClick={() =>
-                                                            handleClearForm(resetForm)}
+                                                            handleClearForm((resetForm))}
                                                     >
                                                         Clear
                                                     </Button>
@@ -672,9 +805,10 @@ const Vehicle = () => {
                                     resetForm
 
                                 }) => {
-                                    const isBtnSearchDisabled = !Object.values(values).some((v) =>
-                                        (typeof v === "string" && v.trim() !== "") || (typeof v === "number" && v > 0)
-                                    );
+                                    // const isBtnSearchDisabled = !Object.values(values).some((v) =>
+                                    //     (typeof v === "string" && v.trim() !== "") || (typeof v === "number" && v > 0)
+                                    // );
+                                    const isBtnSearchDisabled = !Object.values(values).some((v) => v !== 0 && v !== "");
 
                                     return (<form onSubmit={handleSubmit}>
                                         <Grid container spacing={2}>

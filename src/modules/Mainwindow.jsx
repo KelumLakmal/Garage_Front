@@ -1,6 +1,6 @@
 import React from "react";
 import "./Mainwindow.css";
-import {Outlet, Link} from "react-router-dom";
+import { Outlet, Link } from "react-router-dom";
 
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
@@ -16,18 +16,35 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import InboxIcon from "@mui/icons-material/MoveToInbox";
 import MailIcon from "@mui/icons-material/Mail";
+import { useAuth } from "../auth/AuthContext";
 
 const drawerWidth = 240;
 
 const Mainwindow = () => {
+
+  const { hasPermission } = useAuth();
+
+  const MENU_ITEMS = [
+    { label: "Home", path: "/main/home", permission: null },
+    { label: "Student", path: "/main/student", permission: "STUDENT_VIEW" },
+    { label: "Customer", path: "/main/customer", permission: "CUSTOMER_VIEW" },
+    { label: "Vehicle", path: "/main/vehicle", permission: "VEHICLE_VIEW" },
+  ];
+
+  // const filterMenus = () => {
+  //   return MENU_ITEMS.filter((m) => !m.permission || hasPermission(m.permission));
+  // }
+
+  
+
   return (
     <>
       <Box sx={{ display: "flex" }}>
         <CssBaseline />
         <AppBar
           position="fixed"
-          sx={{ zIndex: (theme) => theme.zIndex.drawer + 1}}
-          // sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, background: 'linear-gradient(120deg, #1d76a2ff, #b7dcefff)' }}
+          sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        // sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, background: 'linear-gradient(120deg, #1d76a2ff, #b7dcefff)' }}
         >
           <Toolbar>
             <Typography variant="h6" noWrap component="div">
@@ -49,7 +66,16 @@ const Mainwindow = () => {
           <Toolbar />
           <Box sx={{ overflow: "auto" }}>
             <List>
-              <ListItem disablePadding>
+              {MENU_ITEMS.filter((m) => !m.permission || hasPermission(m.permission)).map((menu, index) => (
+                <ListItem key={index} disablePadding>
+                  <ListItemButton component={Link} to={menu.path}>
+                    <ListItemIcon>{index % 2 == 0 ? <InboxIcon/> : <MailIcon/>}</ListItemIcon>
+                    <ListItemText primary={menu.label}/>
+                  </ListItemButton>
+                </ListItem>
+              ))}
+              
+              {/* <ListItem disablePadding>
                 <ListItemButton component={Link} to="/main/home">
                     <ListItemIcon>
                         <InboxIcon/>
@@ -62,7 +88,7 @@ const Mainwindow = () => {
                     <ListItemIcon>
                         <InboxIcon/>
                     </ListItemIcon>
-                    <ListItemText primary= "Home2" />
+                    <ListItemText primary= "Student" />
                 </ListItemButton>
               </ListItem>
               <ListItem disablePadding>
@@ -80,7 +106,7 @@ const Mainwindow = () => {
                     </ListItemIcon>
                     <ListItemText primary= "Vehicle" />
                 </ListItemButton>
-              </ListItem>
+              </ListItem> */}
             </List>
             <Divider />
             <List>
@@ -88,7 +114,7 @@ const Mainwindow = () => {
                 <ListItem key={text} disablePadding>
                   <ListItemButton>
                     <ListItemIcon>
-                      {index % 2 === 0 ? <InboxIcon/> : <MailIcon/>}
+                      {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
                     </ListItemIcon>
                     <ListItemText primary={text} />
                   </ListItemButton>
@@ -99,7 +125,7 @@ const Mainwindow = () => {
         </Drawer>
         <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
           <Toolbar />
-          <Outlet/>
+          <Outlet />
         </Box>
       </Box>
     </>
