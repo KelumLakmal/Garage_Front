@@ -1,3 +1,27 @@
 /* h2 {
     color: rgb(19, 67, 150);
 } */
+/* .app-bar {
+  animation: appBarAni 5s ease-in-out 0.2s infinite alternate;
+}
+@keyframes appBarAni {
+  from {
+    background: linear-gradient(110deg, #6771e6ff, #c6c9e7ff);
+  }
+  to {
+    background: linear-gradient(110deg, rgb(45, 60, 225), rgb(126, 128, 223));
+  }
+} */
+ .welcome {
+    /* position: relative; */
+    animation: welcomeAni 3s ease-in-out 0.2s 1 forwards;
+ }
+
+ @keyframes welcomeAni {
+    from {
+        transform: translateX(0px);
+    }
+    to {
+        transform: translateX(400px);
+    }
+ }
