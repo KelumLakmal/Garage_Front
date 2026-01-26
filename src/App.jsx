@@ -9,6 +9,7 @@ import { useState } from "react";
 import ProtectedRoute from "./utils/ProtectedRoute";
 import Home from "./modules/Home";
 import { AuthProvider } from "./auth/AuthContext";
+import VehicleRepair from "./modules/VehicleRepair";
 function App() {
   const [isAuthnticate, setIsAuthnticate] = useState(false);
 
@@ -27,6 +28,7 @@ function App() {
               <Route path="student" element={<Student />} />
               <Route path="customer" element={<Customer />} />
               <Route path="vehicle" element={<Vehicle />} />
+              <Route path="vehicleRepairs" element={<VehicleRepair/>} />
             </Route>
             {/* for Invalid URL */}
             <Route path="*" element={<Navigate to='/' replace />} />

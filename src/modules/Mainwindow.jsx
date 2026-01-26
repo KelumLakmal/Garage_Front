@@ -19,7 +19,7 @@ import MailIcon from "@mui/icons-material/Mail";
 import { useAuth } from "../auth/AuthContext";
 import PersonIcon from '@mui/icons-material/Person';
 import LogoutIcon from '@mui/icons-material/Logout';
-import { Avatar, IconButton, Menu, MenuItem } from "@mui/material";
+import { Avatar, Button, IconButton, Menu, MenuItem } from "@mui/material";
 import { AccountCircle, AccountCircleOutlined, AccountCircleRounded, AccountCircleSharp, AccountCircleTwoTone, PersonPinCircle } from "@mui/icons-material";
 import userLoginImg from "../assets/userLogin.jpg"
 
@@ -50,7 +50,10 @@ const Mainwindow = () => {
     { label: "Student", path: "/main/student", permission: "STUDENT_VIEW" },
     { label: "Customer", path: "/main/customer", permission: "CUSTOMER_VIEW" },
     { label: "Vehicle", path: "/main/vehicle", permission: "VEHICLE_VIEW" },
+    { label: "Vehicle Repairs", path: "/main/vehicleRepairs", permission: null },
   ];
+
+ 
 
   // const filterMenus = () => {
   //   return MENU_ITEMS.filter((m) => !m.permission || hasPermission(m.permission));
@@ -145,6 +148,7 @@ const Mainwindow = () => {
                   </ListItemButton>
                 </ListItem>
               ))}
+
 
               {/* <ListItem disablePadding>
                 <ListItemButton component={Link} to="/main/home">

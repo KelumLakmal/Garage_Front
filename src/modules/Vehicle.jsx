@@ -326,8 +326,8 @@ const Vehicle = () => {
 
     const validationSchema = Yup.object({
         plateNumber: Yup.string().required("Plate No is required"),
-        brandId: Yup.number().required("Brand is required").moreThan(0, "Please select brand"),
-        customerId: Yup.number().required("Customer is required").moreThan(0, "Please select owner"),
+        brandId: Yup.number().required("Brand is required").moreThan(0, "Brand is required"),
+        customerId: Yup.number().required("Customer is required").moreThan(0, "Owner is required"),
         model: Yup.string().trim().required("Model is required"),
 
     });
@@ -396,7 +396,8 @@ const Vehicle = () => {
                                     handleChange,
                                     handleBlur,
                                     handleSubmit,
-                                    setFieldValue
+                                    setFieldValue,
+                                    setFieldTouched
                                 }) => (
                                     <form onSubmit={handleSubmit}>
                                         <Grid container spacing={2}>
@@ -435,6 +436,7 @@ const Vehicle = () => {
                                                         setFieldValue("brandId", newValue ? newValue.id : 0)
                                                     }
                                                     value={brands.find((b) => b.id === values.brandId) ?? null}
+                                                    onBlur={() => setFieldTouched("brandId", true)}
                                                     renderOption={(props, option) => {
                                                         const { key, ...rest } = props;
                                                         return (
@@ -494,6 +496,8 @@ const Vehicle = () => {
                                                                 }}
                                                                 label="Select a Brand *"
                                                                 size="small"
+                                                                error={touched.brandId && Boolean(errors.brandId)}
+                                                                helperText={touched.brandId && errors.brandId}
 
                                                             />
 
@@ -575,6 +579,8 @@ const Vehicle = () => {
                                                     getOptionLabel={(option) => option.name || ""}
                                                     onChange={(event, newValue) => setFieldValue("customerId", newValue ? newValue.id : 0)}
                                                     value={customers.find((c) => c.id === values.customerId) ?? null}
+                                                    onBlur={() => setFieldTouched("customerId", true)}
+                                                    // isOptionEqualToValue={(option, value) => option.id === value.id}
                                                     renderOption={(props, option) => {
                                                         const { key, ...rest } = props;
                                                         return (
@@ -607,20 +613,39 @@ const Vehicle = () => {
                                                                 {...params}
                                                                 label="Select Owner *"
                                                                 size='small'
+                                                                error={touched.customerId && Boolean(errors.customerId)}
+                                                                helperText={touched.customerId && errors.customerId}
                                                                 InputProps={{
                                                                     ...params.InputProps,
-                                                                    endAdornment: selectedCustomer ? (
-                                                                        <Box
-                                                                            sx={{
-                                                                                display: "flex",
-                                                                                alignItems: "center",
-                                                                                gap: 1,
-                                                                            }}
-                                                                        >
-                                                                            <Typography color='primary' fontWeight={500}>{selectedCustomer.name}</Typography>
-                                                                            <Typography fontWeight={500} color='primary'>{'(NIC): ' + selectedCustomer.nic }</Typography>
-                                                                        </Box>
-                                                                    ) : null
+                                                                    endAdornment: (
+                                                                        <>
+                                                                            {selectedCustomer && (
+                                                                                <Box
+                                                                                    sx={{
+                                                                                        display: "flex",
+                                                                                        alignItems: "center",
+                                                                                        gap: 1,
+                                                                                    }}
+                                                                                >
+                                                                                    <Typography color='primary' fontWeight={500}>{selectedCustomer.name}</Typography>
+                                                                                    <Typography fontWeight={500} color='primary'>{'(NIC): ' + selectedCustomer.nic}</Typography>
+                                                                                </Box>
+                                                                            )}
+                                                                            {params.InputProps.endAdornment}
+                                                                        </>
+                                                                    )
+                                                                    // endAdornment: selectedCustomer ? (
+                                                                    //     <Box
+                                                                    //         sx={{
+                                                                    //             display: "flex",
+                                                                    //             alignItems: "center",
+                                                                    //             gap: 1,
+                                                                    //         }}
+                                                                    //     >
+                                                                    //         <Typography color='primary' fontWeight={500}>{selectedCustomer.name}</Typography>
+                                                                    //         <Typography fontWeight={500} color='primary'>{'(NIC): ' + selectedCustomer.nic }</Typography>
+                                                                    //     </Box>
+                                                                    // ) : null
                                                                 }}
                                                             />
                                                         )
