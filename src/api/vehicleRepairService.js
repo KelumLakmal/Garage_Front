@@ -1,8 +1,8 @@
 import axiosClient from "./axiosClient";
 
 const vehicleRepairService = {
-    getAllVehicleRepairs: async () => {
-        const response = await axiosClient.get("/VehicleRepairs");
+    getAllVehicleRepairs: async (paramsObject) => {
+        const response = await axiosClient.get("/VehicleRepairs", {params: paramsObject});
         return response.data;
     },
     saveVehicleRepairs: async (vehicleRepairs) => {

@@ -121,6 +121,7 @@ const Login = () => {
                     />
                     <TextField
                         label='Password'
+                        type='password'
                         fullWidth
                         margin='normal'
                         size='small'

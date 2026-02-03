@@ -4,12 +4,14 @@ import homeImage from "../assets/home1.jpg"
 import vehicleService from '../api/vehicleService';
 import { useEffect } from 'react';
 import { ExpandMore } from '@mui/icons-material';
+import useResponseHandler from '../utils/useResponseHandler';
 
 const Home = () => {
 
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [startIndex, setStartIndex] = useState(0);
+  const { responseCreator } = useResponseHandler();
 
 
   const fetchVehicles = async (paramObject) => {
@@ -23,7 +25,13 @@ const Home = () => {
 
     } catch (err) {
       console.error("Error", err.message);
-      window.alert(`You have following error: ${err.message}`);
+      const { code, message } = responseCreator(err.response);
+      if (code === 0) {
+        window.alert(`You have following error: ${message}`);
+      } else {
+        // setResponseErrors(message);
+      }
+      // window.alert(`You have following error: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -122,11 +130,11 @@ const Home = () => {
           <Grid size={{ md: 12, xs: 6 }}>
 
             <Box>
-              <Accordion sx={{background: 'linear-gradient(90deg, #d4d5ddff, #ffffffff)'}}>
+              <Accordion sx={{ background: 'linear-gradient(90deg, rgb(36, 38, 189), rgb(128, 120, 209))', }}>
                 <AccordionSummary
                   expandIcon={<ExpandMore />}
                 >
-                  <Typography variant='body1' >
+                  <Typography variant='body1' sx={{ color: "#e6e3f0"}} >
                     More informations
                   </Typography>
                 </AccordionSummary>
@@ -139,17 +147,18 @@ const Home = () => {
                     gap: 1
                   }}>
                     <Typography sx={{
-                      fontSize: 14
+                      fontSize: 14,
+                      color: "#e6e3f0"
                     }}
                       color='text.secondary'
                     >
-                      Email: vdvgvxgx.mail.com
+                      Email: kng@mail.com
                     </Typography>
 
-                    <Typography sx={{ fontSize: 14}}>
-                      Contact No: 06746490xs
+                    <Typography sx={{ fontSize: 14, color: "#e6e3f0" }}>
+                      Contact No: 0717625417
                     </Typography>
-                   
+
                   </Box>
 
                 </AccordionDetails>

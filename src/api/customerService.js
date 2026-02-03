@@ -6,6 +6,8 @@ import axiosClient from "./axiosClient";
 // }
 export const getAllCustomers = async (paramsObject) => {
     const response = await axiosClient.get("/Customers", {params: paramsObject});
+    // console.log("ResposnseFull", response);
+    
     return response.data;
 }
 

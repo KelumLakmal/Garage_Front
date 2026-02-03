@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }) => {
             setUser(JSON.parse(userData));
             setPermissions(decodeToken.permission);
         }
-
+        console.log("Workss");
     }, []);
 
     const logIn = (data) => {

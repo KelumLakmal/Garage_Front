@@ -12,6 +12,7 @@ import SnackbarCustom from './SnackbarCustom';
 import useImagePreview from '../utils/useImagePreview';
 import useBtnPermission from '../utils/useBtnPermission';
 import { MultilineChart } from '@mui/icons-material';
+import useResponseHandler from '../utils/useResponseHandler';
 
 const Vehicle = () => {
     const [loading, setLoading] = useState(false);
@@ -39,6 +40,10 @@ const Vehicle = () => {
     // const [preview, setPreview] = useState(null);
     const [filterText, setFilterText] = useState("");
 
+    const { responseCreator } = useResponseHandler();
+
+    const [responseErrors, setResponseErrors] = useState(null);
+
     const handleSnackbarClose = () => {
         setSnackbarOpen(false);
     };
@@ -53,7 +58,13 @@ const Vehicle = () => {
             console.log("Brands", brands);
         } catch (err) {
             console.error("Error", err.message);
-            window.alert(`You have following error: ${err.message}`);
+            const { code, message } = responseCreator(err.response);
+            if (code === 0) {
+                window.alert(`You have following error: ${message}`);
+            } else {
+                setResponseErrors(message);
+            }
+            // window.alert(`You have following error: ${err.message}`);
         } finally {
             setLoading(false);
         }
@@ -68,7 +79,13 @@ const Vehicle = () => {
 
         } catch (err) {
             console.error("Error", err.message);
-            window.alert(`You have following error: ${err.message}`);
+            // window.alert(`You have following error: ${err.message}`);
+           const { code, message } = responseCreator(err.response);
+            if (code === 0) {
+                window.alert(`You have following error: ${message}`);
+            } else {
+                setResponseErrors(message);
+            }
         } finally {
             setLoading(false);
         }
@@ -83,8 +100,14 @@ const Vehicle = () => {
             setVehicles(vehicles);
 
         } catch (err) {
-            console.error("Error", err.message);
-            window.alert(`You have following error: ${err.message}`);
+            console.error("Error", err);
+            const { code, message } = responseCreator(err.response);
+            if (code === 0) {
+                window.alert(`You have following error: ${message}`);
+            } else {
+                setResponseErrors(message);
+            }
+            console.log(`Your Errors: ${code} ${message}`);
         } finally {
             setLoading(false);
         }
@@ -145,7 +168,14 @@ const Vehicle = () => {
         openDialog(ACTIONS.ADD, values, formikActions, "save vehicle:");
     }
 
-    const handleUpdate = (values, formikActions) => {
+    const handleUpdate = async (values, formikActions, validateForm) => {
+        const formErrorsObject = await validateForm();
+        // console.log("ValidationErors", formErrorsObject);
+        const errorObjectKeys = Object.keys(formErrorsObject);
+
+        if (errorObjectKeys.length) {
+            return;
+        }
         openDialog(ACTIONS.UPDATE, values, formikActions, "update vehicle:");
     }
 
@@ -167,6 +197,7 @@ const Vehicle = () => {
             customerId: 0,
             image: null
         });
+        setResponseErrors(null);
         if (resetForm) resetForm();
         // setPreview(null);
         imageClear();
@@ -226,6 +257,8 @@ const Vehicle = () => {
             }
         } catch (err) {
             console.error("Vehicle save failed:", err);
+            const { code, message } = responseCreator(err.response);
+            setResponseErrors(message);
         } finally {
             console.log("FINAL");
             setLoading(false);
@@ -266,6 +299,8 @@ const Vehicle = () => {
             }
         } catch (err) {
             console.error("Vehicle update failed:", err);
+            const { code, message } = responseCreator(err.response);
+            setResponseErrors(message);
         } finally {
             setLoading(false);
             closeDialog();
@@ -289,6 +324,8 @@ const Vehicle = () => {
             }
         } catch (err) {
             console.error("Vehicle delete failed:", err);
+            const { code, message } = responseCreator(err.response);
+            setResponseErrors(message);
         } finally {
             setLoading(false);
             closeDialog();
@@ -397,7 +434,8 @@ const Vehicle = () => {
                                     handleBlur,
                                     handleSubmit,
                                     setFieldValue,
-                                    setFieldTouched
+                                    setFieldTouched,
+                                    validateForm
                                 }) => (
                                     <form onSubmit={handleSubmit}>
                                         <Grid container spacing={2}>
@@ -770,7 +808,7 @@ const Vehicle = () => {
                                                         variant='contained'
                                                         sx={{ width: 120 }}
                                                         disabled={!selectedVehicle || !btnUpdateEnabled}
-                                                        onClick={() => handleUpdate(values, formikActions)}
+                                                        onClick={async () => await handleUpdate(values, formikActions, validateForm)}
                                                     >
                                                         Update
                                                     </Button>
@@ -792,6 +830,11 @@ const Vehicle = () => {
                                                     </Button>
                                                 </Stack>
                                             </Grid>
+                                            {responseErrors && (
+                                                <Grid size={{ md: 12, xs: 12 }}>
+                                                    <Typography align="center" variant="body2" color="error">{responseErrors}</Typography>
+                                                </Grid>
+                                            )}
                                         </Grid>
 
                                     </form>
@@ -1000,11 +1043,11 @@ const Vehicle = () => {
                                                 sx={{
                                                     cursor: 'pointer',
                                                     "&.Mui-selected": {
-                                                        backgroundColor: "##daf2eaff",
+                                                        backgroundColor: "rgb(206, 209, 228)",
                                                         transition: "background-color 0.3s linear",
                                                     },
                                                     "&.Mui-selected:hover": {
-                                                        backgroundColor: "#daf2eaff",
+                                                        backgroundColor: "rgb(197, 203, 235)",
                                                     }
 
                                                 }}

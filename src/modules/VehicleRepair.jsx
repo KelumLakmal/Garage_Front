@@ -1,4 +1,4 @@
-import { Autocomplete, Backdrop, Box, Button, Checkbox, Chip, CircularProgress, FormControl, FormHelperText, Grid, InputLabel, List, ListItemButton, ListItemIcon, ListItemText, MenuItem, Paper, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Typography } from '@mui/material'
+import { Alert, Autocomplete, Backdrop, Box, Button, Checkbox, Chip, CircularProgress, FormControl, FormHelperText, Grid, InputLabel, List, ListItemButton, ListItemIcon, ListItemText, MenuItem, Paper, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Typography } from '@mui/material'
 import React, { useState } from 'react'
 import { useEffect } from 'react';
 import vehicleService from '../api/vehicleService';
@@ -11,6 +11,7 @@ import useConfirmDialog, { ACTIONS } from './useConfirmDialog';
 import ConfirmDialog from './ConfirmDialog';
 import vehicleRepairService from '../api/vehicleRepairService';
 import SnackbarCustom from './SnackbarCustom';
+import useResponseHandler from '../utils/useResponseHandler';
 
 const VehicleRepair = () => {
 
@@ -36,6 +37,8 @@ const VehicleRepair = () => {
     const [snackbarMessage, setSnackbarMessage] = useState("");
 
     const [selectedVehicleRepair, setSelectedVehicleRepair] = useState(null);
+
+    const { responseCreator} = useResponseHandler();
 
     const [vehicleRepair, setVehicleRepair] = useState({
         id: 0,
@@ -96,22 +99,34 @@ const VehicleRepair = () => {
 
         } catch (err) {
             console.error("Error", err);
-            window.alert(`You have following error: ${err.message}`);
+            // window.alert(`You have following error: ${err.message}`);
+            const { code, message } = responseCreator(err.response);
+            if (code === 0) {
+                window.alert(`You have following error: ${message}`);
+            } else {
+                // setResponseErrors(message);
+            }
         } finally {
             setLoading(false);
         }
     }
 
-    const fetchVehicleRepairs = async () => {
+    const fetchVehicleRepairs = async (paramsObject) => {
         try {
             setLoading(true);
             await new Promise((resolve) => setTimeout(resolve, 0));
-            const vehicleRepairs = await vehicleRepairService.getAllVehicleRepairs();
+            const vehicleRepairs = await vehicleRepairService.getAllVehicleRepairs(paramsObject);
             setVehicleRepairs(vehicleRepairs);
 
         } catch (err) {
             console.error("Error", err.message);
-            window.alert(`You have following error: ${err.message}`);
+            // window.alert(`You have following error: ${err.message}`);
+            const { code, message } = responseCreator(err.response);
+            if (code === 0) {
+                window.alert(`You have following error: ${message}`);
+            } else {
+                // setResponseErrors(message);
+            }
         }
         finally {
             setLoading(false);
@@ -128,7 +143,13 @@ const VehicleRepair = () => {
             setRepairCategories(repairCategories);
         } catch (err) {
             console.error("Error", err.message);
-            window.alert(`You have following error: ${err.message}`);
+            // window.alert(`You have following error: ${err.message}`);
+            const { code, message } = responseCreator(err.response);
+            if (code === 0) {
+                window.alert(`You have following error: ${message}`);
+            } else {
+                // setResponseErrors(message);
+            }
         } finally {
             setLoading(false);
         }
@@ -149,7 +170,13 @@ const VehicleRepair = () => {
 
         } catch (err) {
             console.error("Error", err.message);
-            window.alert(`You have following error: ${err.message}`);
+            // window.alert(`You have following error: ${err.message}`);
+            const { code, message } = responseCreator(err.response);
+            if (code === 0) {
+                window.alert(`You have following error: ${message}`);
+            } else {
+                // setResponseErrors(message);
+            }
         } finally {
             setLoading(false);
         }
@@ -167,7 +194,7 @@ const VehicleRepair = () => {
     useEffect(() => {
         fetchVehicles(null);
         fetchRepaircategories();
-        fetchVehicleRepairs();
+        fetchVehicleRepairs(null);
     }, []);
 
     useEffect(() => {
@@ -233,6 +260,13 @@ const VehicleRepair = () => {
                 ? prev.filter((x) => x !== id)
                 : [...prev, id]
         });
+        // setChecked((prev) => {
+        //     const isExists = prev.includes(id);
+        //     if (isExists) {
+        //        return prev.filter((p) => p.id !== id);
+        //     }
+        //     return [...prev, id];
+        // });
     }
 
     const handleCheckRight = () => {
@@ -393,7 +427,7 @@ const VehicleRepair = () => {
                 }
                 setPage(0);
                 handleClearForm(pendingActions?.resetForm);
-                await fetchVehicleRepairs();
+                await fetchVehicleRepairs(null);
             }
 
         } catch (err) {
@@ -430,7 +464,7 @@ const VehicleRepair = () => {
                 }
                 setPage(0);
                 handleClearForm(pendingActions?.resetForm);
-                await fetchVehicleRepairs();
+                await fetchVehicleRepairs(null);
             }
         } catch (err) {
             console.error("VehicleRepairUpdateFailed", err);
@@ -458,7 +492,7 @@ const VehicleRepair = () => {
                 }
                 setPage(0);
                 handleClearForm(pendingActions?.resetForm);
-                await fetchVehicleRepairs();
+                await fetchVehicleRepairs(null);
             }
 
         } catch (err) {
@@ -467,6 +501,37 @@ const VehicleRepair = () => {
             setLoading(false);
             closeDialog();
         }
+    }
+
+    const [filterText, setFilterText] = useState("");
+
+    const filteredVehicleRepairs = vehicleRepairs.filter((vr) => {
+        const searchText = filterText.trim().toLowerCase();
+
+        return (
+            vr.vehicle.plateNumber.toLowerCase().includes(searchText) ||
+            vr.repair.name.toLowerCase().includes(searchText) ||
+            vr.repair.repairCategory.name.toLowerCase().includes(searchText) ||
+            vr.repairedDate.toLowerCase().includes(searchText)
+        );
+    });
+
+    const handleSearch = async (values) => {
+        console.log("SeachValues", values);
+        const paramObject = Object.fromEntries(Object.entries(values).filter(([pro, v]) => pro !== "repairCategoryId" &&
+            v !== null && v !== undefined &&
+            v !== "" && v !== 0));
+
+        //  console.log("FinalObject", paramObject);
+        await fetchVehicleRepairs(paramObject);
+        setPageForViewTable(0);
+    }
+
+    const handleSearchClear = async (resetForm) => {
+        resetForm();
+        await fetchVehicleRepairs();
+        setPageForViewTable(0);
+        setFilterText("");
     }
 
 
@@ -502,7 +567,19 @@ const VehicleRepair = () => {
                 <Grid container rowSpacing={2} columnSpacing={1} >
                     <Grid size={{ md: 8, xs: 12 }}>
                         <Paper sx={{ p: 2 }}>
-                            <Typography variant='h6' gutterBottom>Vehicle Repair Form</Typography>
+                            <Typography
+                                variant='h6'
+                                sx={{
+                                    background: 'linear-gradient(120deg, #10097cff, #b3b5e8ff)',
+                                    color: '#fff',
+                                    padding: 1,
+                                    borderRadius: '5px',
+                                    mb: 2
+                                }}
+                                gutterBottom
+                            >
+                                Vehicle Repair Form
+                            </Typography>
                             <Formik
                                 enableReinitialize
                                 initialValues={vehicleRepair}
@@ -782,6 +859,7 @@ const VehicleRepair = () => {
                                                     </Button>
                                                     <Button
                                                         variant='contained'
+                                                        // size='small'
                                                         sx={{ width: 120 }}
                                                         disabled={!isEditMode}
                                                         onClick={() => handleUpdate(values, formikActions, { validateForm, setTouched })}
@@ -816,14 +894,168 @@ const VehicleRepair = () => {
                     </Grid>
                     <Grid size={{ md: 4, xs: 12 }}>
                         <Paper sx={{ p: 2 }}>
-                            <Typography variant='h6'>Vehicle Repair Search</Typography>
+                            <Typography variant='h6' gutterBottom
+                                sx={{
+                                    background: 'linear-gradient(120deg, #10097cff, #b3b5e8ff)',
+                                    color: '#fff',
+                                    mb: 2,
+                                    padding: 1,
+                                    borderRadius: '5px'
+                                }}
+                            >
+                                Vehicle Repair Search
+                            </Typography>
+                            <Formik
+                                initialValues={{
+                                    plateNumber: "",
+                                    repairId: 0,
+                                    repairCategoryId: 0
+                                }}
+                                onSubmit={handleSearch}
+                            >
+                                {({
+                                    values,
+                                    setFieldValue,
+                                    handleBlur,
+                                    handleChange,
+                                    handleSubmit,
+                                    resetForm
+                                }) => {
+                                    const formObject = {
+                                        plateNumber: values.plateNumber || "",
+                                        repairId: values?.repairId
+                                    };
+                                    // console.log("Test", formObject);
+
+                                    const isSearchBtnDisableld = !Object.values(formObject).some((v) => v !== 0 && v !== "");
+                                    return (
+                                        <form onSubmit={handleSubmit}>
+                                            <Grid container spacing={2}>
+                                                <Grid size={{ md: 12, xs: 12 }}>
+                                                    <TextField
+                                                        name='plateNumber'
+                                                        label='Plate No'
+                                                        variant='outlined'
+                                                        fullWidth
+                                                        size='small'
+                                                        onChange={(e) => {
+                                                            setFieldValue("plateNumber", e.target.value.replace(/^\s+/, ""));
+                                                        }}
+                                                        onBlur={(e) => {
+                                                            handleBlur(e);
+                                                            setFieldValue("plateNumber", e.target.value.trim());
+                                                        }}
+                                                        value={values.plateNumber}
+                                                    />
+                                                </Grid>
+                                                <Grid size={{ md: 12, xs: 12 }}>
+                                                    <FormControl variant='outlined' fullWidth size='small' >
+                                                        <InputLabel id='categoryId'>Select Repair Category </InputLabel>
+                                                        <Select
+                                                            labelId='categoryId'
+                                                            label='Select Repair Category *'
+                                                            name='repairCategoryId'
+                                                            onChange={async (e) => {
+                                                                handleChange(e);
+                                                                await getRepairsByCategoryId(e.target.value);
+                                                            }}
+                                                            value={values.repairCategoryId || ''}
+                                                            onBlur={handleBlur}
+
+                                                        >
+                                                            <MenuItem value={0} disabled>Pick a Category</MenuItem>
+                                                            {repairCategories.map((rc) => (
+                                                                <MenuItem key={rc.id} value={rc.id}>{rc.name}</MenuItem>
+                                                            ))}
+
+                                                        </Select>
+                                                    </FormControl>
+                                                </Grid>
+                                                <Grid size={{ md: 12, xs: 12 }}>
+                                                    <Autocomplete
+                                                        disabled={values.repairCategoryId === 0}
+                                                        options={repairsByCategoryId}
+                                                        getOptionLabel={(option) => option.name || ""}
+                                                        onChange={(event, newValue) => setFieldValue("repairId", newValue ? newValue.id : 0)}
+                                                        value={repairsByCategoryId.find((r) => r.id === values.repairId) ?? null}
+
+                                                        renderInput={(params) => (
+                                                            <TextField
+                                                                {...params}
+                                                                label='Select a Repair'
+                                                                size='small'
+                                                            />
+                                                        )}
+                                                    />
+                                                </Grid>
+                                                <Grid size={{ md: 12, xs: 12 }}>
+                                                    <Stack direction='row' spacing={1}>
+                                                        <Button
+                                                            variant='contained'
+                                                            sx={{
+                                                                width: 120
+                                                            }}
+                                                            type='submit'
+                                                            disabled={isSearchBtnDisableld}
+                                                        // size='small'
+                                                        >
+                                                            Search
+                                                        </Button>
+                                                        <Button
+                                                            variant='contained'
+                                                            sx={{
+                                                                width: 120
+                                                            }}
+                                                            onClick={() => handleSearchClear(resetForm)}
+                                                        >
+                                                            Clear
+                                                        </Button>
+                                                    </Stack>
+                                                </Grid>
+                                            </Grid>
+                                        </form>
+                                    );
+                                }}
+                            </Formik>
 
 
                         </Paper>
                     </Grid>
                     <Grid size={{ md: 12, xs: 12 }}>
-                        <Paper sx={{ p: 2 }}>
-                            <Typography variant='h6'> Repair Details</Typography>
+                        <Paper sx={{ p: 0 }}>
+                            <Typography
+                                variant='h6'
+                                gutterBottom
+                                sx={{
+                                    background: 'linear-gradient(120deg, #10097cff, #b3b5e8ff)',
+                                    color: '#fff',
+                                    borderRadius: '5px',
+                                    padding: 1,
+                                    mb: 2
+                                }}
+                            >
+                                Repair Details
+                            </Typography>
+                            <Box textAlign='right'>
+                                <TextField
+                                    label='Search By Table Results'
+                                    variant='outlined'
+                                    placeholder='Enter search values'
+                                    size='small'
+                                    sx={{
+                                        width: '20%',
+                                        "& .MuiInputBase-input": {
+                                            padding: '8px',
+                                            fontSize: '1rem'
+                                        }
+                                    }}
+                                    onChange={(e) => {
+                                        setFilterText(e.target.value.trim());
+                                        setPageForViewTable(0);
+                                    }}
+                                    value={filterText}
+                                />
+                            </Box>
                             <TableContainer>
                                 <Table>
                                     <TableHead>
@@ -837,47 +1069,63 @@ const VehicleRepair = () => {
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
-                                        {vehicleRepairs.slice(
-                                            pageForViewTable * rowsPerPageForViewTable,
-                                            pageForViewTable * rowsPerPageForViewTable + rowsPerPageForViewTable
-                                        ).map((vr) => (
-                                            <TableRow
-                                                key={vr.id}
-                                                hover
-                                                selected={vr.id === selectedVehicleRepair?.id}
-                                                onClick={async () => await handleRowClick(vr)}
-                                                sx={{
-                                                    cursor: 'pointer',
-                                                    "&.Mui-selected": {
-                                                        backgroundColor: "rgb(206, 209, 228)",
-                                                        transition: "background-color 0.3s linear",
-                                                    },
-                                                    "&.Mui-selected:hover": {
-                                                        backgroundColor: "rgb(197, 203, 235)",
-                                                    }
-                                                }}
-                                            >
-                                                <TableCell>{vr.vehicle.plateNumber}</TableCell>
-                                                <TableCell>{vr.repair.repairCategory.name}</TableCell>
-                                                <TableCell>{vr.repair.name}</TableCell>
-                                                <TableCell>{vr.speedoMeter || '-'}</TableCell>
-                                                <TableCell>{vr.note || '-'}</TableCell>
-                                                {/* <TableCell>{vr.repairedDate.split("T")[0]}</TableCell> */}
-                                                {/* <TableCell>{vr.repairedDate ? new Date(vr.repairedDate).toISOString().split("T")[0] : "-"}</TableCell> */}
-                                                <TableCell>
-                                                    {vr.repairedDate ? new Date(vr.repairedDate).toLocaleDateString("en-GB", {
-                                                        day: "2-digit",
-                                                        month: "short",
-                                                        year: "numeric"
-                                                    }) : "-"}
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
+                                        {filteredVehicleRepairs.length ?
+                                            (
+                                                filteredVehicleRepairs.slice(
+                                                    pageForViewTable * rowsPerPageForViewTable,
+                                                    pageForViewTable * rowsPerPageForViewTable + rowsPerPageForViewTable
+                                                ).map((vr) => (
+                                                    <TableRow
+                                                        key={vr.id}
+                                                        hover
+                                                        selected={vr.id === selectedVehicleRepair?.id}
+                                                        onClick={async () => await handleRowClick(vr)}
+                                                        sx={{
+                                                            cursor: 'pointer',
+                                                            "&.Mui-selected": {
+                                                                backgroundColor: "rgb(206, 209, 228)",
+                                                                transition: "background-color 0.3s linear",
+                                                            },
+                                                            "&.Mui-selected:hover": {
+                                                                backgroundColor: "rgb(197, 203, 235)",
+                                                            }
+                                                        }}
+                                                    >
+                                                        <TableCell>{vr.vehicle.plateNumber}</TableCell>
+                                                        <TableCell>{vr.repair.repairCategory.name}</TableCell>
+                                                        <TableCell>{vr.repair.name}</TableCell>
+                                                        <TableCell>{vr.speedoMeter || '-'}</TableCell>
+                                                        <TableCell>{vr.note || '-'}</TableCell>
+                                                        {/* <TableCell>{vr.repairedDate.split("T")[0]}</TableCell> */}
+                                                        {/* <TableCell>{vr.repairedDate ? new Date(vr.repairedDate).toISOString().split("T")[0] : "-"}</TableCell> */}
+                                                        <TableCell>
+                                                            {vr.repairedDate ? new Date(vr.repairedDate).toLocaleDateString("en-GB", {
+                                                                day: "2-digit",
+                                                                month: "short",
+                                                                year: "numeric"
+                                                            }) : "-"}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))
+                                            ) :
+                                            (
+                                                <TableRow>
+                                                    <TableCell colSpan={6}>
+                                                        <Alert severity='warning' sx={{ justifyContent: 'center' }}>
+                                                            <Typography>
+                                                                No records to display.
+                                                            </Typography>
+                                                        </Alert>
+                                                    </TableCell>
+                                                </TableRow>
+                                            )
+                                        }
+
                                     </TableBody>
                                 </Table>
                                 <TablePagination
                                     component='div'
-                                    count={vehicleRepairs.length}
+                                    count={filteredVehicleRepairs.length}
                                     rowsPerPageOptions={[5, 10, 15, 20]}
                                     page={pageForViewTable}
                                     rowsPerPage={rowsPerPageForViewTable}
@@ -888,8 +1136,6 @@ const VehicleRepair = () => {
                                     }}
                                 />
                             </TableContainer>
-
-
                         </Paper>
                     </Grid>
                 </Grid>

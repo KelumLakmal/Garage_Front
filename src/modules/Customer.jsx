@@ -40,6 +40,7 @@ import SnackbarCustom from "./SnackbarCustom";
 import useConfirmDialog, { ACTIONS } from "./useConfirmDialog";
 import ConfirmDialog from "./ConfirmDialog";
 import './Customer.css';
+import useResponseHandler from "../utils/useResponseHandler";
 
 const Customer = () => {
   const [loading, setLoading] = useState(false);
@@ -80,6 +81,9 @@ const Customer = () => {
     closeDialog
   } = useConfirmDialog();
 
+  const { responseCode, responseMessage, responseCreator } = useResponseHandler();
+  const [reponseErrors, setReponseErrors] = useState(null);
+
   const handleSnackbarClose = () => {
     setSnackbarOpen(false);
   };
@@ -92,6 +96,7 @@ const Customer = () => {
 
   const handleClearForm = (formikActions) => {
     setSelectedCustomer(null);
+    setReponseErrors(null);
     setCustomer({
       id: 0,
       name: "",
@@ -108,6 +113,14 @@ const Customer = () => {
 
   // }
 
+
+
+  // useEffect(() => {
+  //   if (responseCode) {
+  //     console.log(`Your Errors: ${responseCode} ${responseMessage}`);
+  //   }
+  // }, [responseCode, responseMessage]);
+
   const fetchCustomers = async (paramObject) => {
     try {
       setLoading(true);
@@ -118,7 +131,12 @@ const Customer = () => {
       console.log("Customers", customers);
     } catch (err) {
       console.error("Error:", err.message);
-      window.alert(`You have error: ${err.message}`);
+      const { code, message } = responseCreator(err.response);
+      if (code === 0) {
+        window.alert(`You have following error: ${message}`);
+      } else {
+        setReponseErrors(message);
+      }
     } finally {
       setLoading(false);
     }
@@ -179,7 +197,10 @@ const Customer = () => {
         pendingActions?.resetForm();
       }
     } catch (error) {
-      console.error("Customer save failed:", error);
+      // console.error("Customer save failed:", error);
+      const { code, message } = responseCreator(error.response);
+      setReponseErrors(message);
+      console.log(`Your Errors: ${code} ${message}`);
     } finally {
       setLoading(false);
       closeDialog();
@@ -218,10 +239,13 @@ const Customer = () => {
   //   }
   // };
 
-  const handleUpdate = (values, formikActions) => {
-    // setPendingValues(values);
-    // setPendingActions(formikActions);
-    // setActionType("UPDATE");
+  const handleUpdate = async (values, formikActions, validateForm) => {
+    const errors = await validateForm();
+    console.log("UpdateErros", errors);
+    const errorObjectkeys = Object.keys(errors);
+    if (errorObjectkeys.length) {
+      return;
+    }
     openDialog(ACTIONS.UPDATE, values, formikActions, "update customer:");
   };
 
@@ -239,6 +263,9 @@ const Customer = () => {
 
     const customerId = pendingValues.id;
 
+    console.log("UpdateFinal", customerUpdateModel);
+
+
     try {
       setLoading(true);
       const response = await updateCustomer(customerId, customerUpdateModel);
@@ -251,8 +278,11 @@ const Customer = () => {
         handleClearForm(pendingActions);
         // pendingActions?.resetForm();
       }
-    } catch (err) {
-      console.error("Update-Eroor", err);
+    } catch (error) {
+      console.error("Update-Eroor", error.response);
+      const { code, message } = responseCreator(error.response);
+      setReponseErrors(message);
+      console.log(`Your Errors: ${code} ${message}`);
     } finally {
       setLoading(false);
       closeDialog();
@@ -284,6 +314,9 @@ const Customer = () => {
       }
     } catch (err) {
       console.error("Deleted Error", err);
+      const { code, message } = responseCreator(err.response);
+      setReponseErrors(message);
+      console.log(`Your Errors: ${code} ${message}`);
     } finally {
       setLoading(false);
       closeDialog();
@@ -333,32 +366,6 @@ const Customer = () => {
       customer.email?.toLowerCase().includes(search)
     );
   });
-
-  const showNoRecords = filteredCustomers.length === 0 && filterText.trim() !== "";
-
-  // useEffect(() => {
-  //   if (filteredCustomers.length === 0 && !showNoRecords) {
-  //     setShowNoRecords(true);
-
-  //     const timer = setTimeout(() => {
-  //       setShowNoRecords(false);
-  //     }, 2000);
-
-  //     return () => clearTimeout(timer);
-  //   }
-
-  // }, [filteredCustomers, showNoRecords]);
-
-  // useEffect(() => {
-  //   if (filteredCustomers.length === 0) {
-  //     setShowNoRecords(true);
-  //   }
-  //   const timer = setTimeout(() => {
-  //     setShowNoRecords(false);
-  //   }, 2000);
-
-  //   return () => clearTimeout(timer);
-  // }, [filteredCustomers, ]);
 
   return (
     <>
@@ -441,7 +448,14 @@ const Customer = () => {
           <Grid size={{ md: 8, xs: 12 }}>
             <Paper sx={{ p: 2 }}>
               {/* <Typography variant="h2">First</Typography> */}
-              <Typography variant="h4" gutterBottom
+              <Typography variant="h6" gutterBottom
+                sx={{
+                  background: 'linear-gradient(120deg, #10097cff, #b3b5e8ff)',
+                  color: '#fff',
+                  padding: 1,
+                  borderRadius: '5px',
+                  mb: 2
+                }}
               >
                 Customer Form
               </Typography>
@@ -457,6 +471,7 @@ const Customer = () => {
                   touched,
                   formikActions,
                   handleChange,
+                  validateForm,
                   handleBlur,
                   handleSubmit,
                   setFieldValue,
@@ -553,7 +568,7 @@ const Customer = () => {
                             sx={{ width: 120 }}
                             variant="contained"
                             disabled={!selectedCustomer}
-                            onClick={() => handleUpdate(values, formikActions)}
+                            onClick={async () => await handleUpdate(values, formikActions, validateForm)}
                           >
                             Update
                           </Button>
@@ -574,6 +589,11 @@ const Customer = () => {
                           </Button>
                         </Stack>
                       </Grid>
+                      {reponseErrors && (
+                        <Grid size={{ md: 12, xs: 12 }}>
+                          <Typography align="center" variant="body2" color="error">{reponseErrors}</Typography>
+                        </Grid>
+                      )}
                     </Grid>
                   </form>
                 )}
@@ -582,9 +602,18 @@ const Customer = () => {
           </Grid>
           <Grid size={{ md: 4, xs: 12 }}>
             <Paper sx={{ p: 2 }}>
-              <Typography variant="h4" gutterBottom
+              <Typography variant="h6" gutterBottom
+                sx={{
+                  background: 'linear-gradient(120deg, #10097cff, #b3b5e8ff)',
+                  color: '#fff',
+                  padding: 1,
+                  borderRadius: '5px',
+                  mb: 2
+                }}
 
-              >Customer Search</Typography>
+              >
+                Customer Search
+              </Typography>
               <Formik
                 initialValues={{
                   name: "",
@@ -738,24 +767,23 @@ const Customer = () => {
                   />
                 </Box>
               </Box>
-              {filteredCustomers.length ? (
-                <TableContainer >
-                  <Table >
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Name</TableCell>
-                        <TableCell>Mobile</TableCell>
-                        <TableCell>NIC</TableCell>
-                        <TableCell>Email</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {filteredCustomers
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Name</TableCell>
+                      <TableCell>Mobile</TableCell>
+                      <TableCell>NIC</TableCell>
+                      <TableCell>Email</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {filteredCustomers.length ? (
+                      filteredCustomers
                         .slice(
                           page * rowsPerPage,
                           page * rowsPerPage + rowsPerPage
-                        )
-                        .map((customer) => (
+                        ).map((customer) => (
                           <TableRow
                             key={customer.id}
                             hover
@@ -765,11 +793,11 @@ const Customer = () => {
                               cursor: "pointer",
                               // backgroundColor: selectedCustomer?.id == customer.id ? "#d2b9f1ff" : "inherit"
                               "&.Mui-selected": {
-                                backgroundColor: "#daf2eaff",
+                                backgroundColor: "rgb(206, 209, 228)",
                                 transition: "background-color 0.3s linear",
                               },
                               "&.Mui-selected:hover": {
-                                backgroundColor: "#daf2eaff",
+                                backgroundColor: "rgb(197, 203, 235)",
                               },
                             }}
                           >
@@ -778,40 +806,37 @@ const Customer = () => {
                             <TableCell>{customer.nic}</TableCell>
                             <TableCell>{customer.email}</TableCell>
                           </TableRow>
-                        ))}
-                    </TableBody>
-                  </Table>
-                  <TablePagination
-                    component="div"
-                    count={filteredCustomers.length}
-                    page={page}
-                    onPageChange={(event, newPage) => setPage(newPage)}
-                    rowsPerPage={rowsPerPage}
-                    onRowsPerPageChange={(event) => {
-                      setRowsPerPage(parseInt(event.target.value, 10));
-                      setPage(0);
-                    }}
-                    rowsPerPageOptions={[5, 10, 15, 20]}
-                  />
-                </TableContainer>
-
-              ) : showNoRecords && (
-                <Alert severity="warning"
-                  sx={{
-                    justifyContent: "center",
+                        ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={4}>
+                          <Alert severity='warning' sx={{ justifyContent: 'center' }}>
+                            <Typography>
+                              No records to display.
+                            </Typography>
+                          </Alert>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+                <TablePagination
+                  component="div"
+                  count={filteredCustomers.length}
+                  page={page}
+                  onPageChange={(event, newPage) => setPage(newPage)}
+                  rowsPerPage={rowsPerPage}
+                  onRowsPerPageChange={(event) => {
+                    setRowsPerPage(parseInt(event.target.value, 10));
+                    setPage(0);
                   }}
-                >
-                  <Typography align="center" >
-                    No records to display.
-                  </Typography>
-                </Alert>
-              )
-              }
-
+                  rowsPerPageOptions={[5, 10, 15, 20]}
+                />
+              </TableContainer>
             </Paper>
-          </Grid>
-        </Grid>
-      </Box>
+          </Grid >
+        </Grid >
+      </Box >
     </>
   );
 };
