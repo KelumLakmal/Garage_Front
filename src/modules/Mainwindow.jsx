@@ -55,7 +55,7 @@ const Mainwindow = () => {
     { label: "Student", path: "/main/student", permission: "STUDENT_VIEW", icon: <MailIcon /> },
     { label: "Customer", path: "/main/customer", permission: "CUSTOMER_VIEW", icon: <Person2OutlinedIcon fontSize="medium" /> },
     { label: "Vehicle", path: "/main/vehicle", permission: "VEHICLE_VIEW", icon: <DirectionsCarOutlinedIcon /> },
-    { label: "Vehicle Repairs", path: "/main/vehicleRepairs", permission: null, icon: <ConstructionOutlinedIcon /> },
+    { label: "Vehicle Repairs", path: "/main/vehicleRepairs", permission: "VEHICLEREPAIR_VIEW", icon: <ConstructionOutlinedIcon /> },
   ];
 
 
@@ -176,7 +176,9 @@ const Mainwindow = () => {
                   </ListItemButton>
                 </ListItem>
               ))} */}
-              <ListItem disablePadding>
+
+              
+              {/* <ListItem disablePadding>
                 <ListItemButton onClick={handleMenu1Open}>
                   <ListItemIcon><SendIcon /></ListItemIcon>
                   <ListItemText primary='Menu 1' />
@@ -210,7 +212,7 @@ const Mainwindow = () => {
                     </ListItemButton>
                   </ListItem>
                 </List>
-              </Collapse>
+              </Collapse> */}
             </List>
           </Box>
         </Drawer>
