@@ -11,6 +11,7 @@ export const AuthProvider = ({ children }) => {
 
     const [user, setUser] = useState(null);
     const [permissions, setPermissions] = useState(null);
+    const [authLoading, setAuthLoading] = useState(true);
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -22,6 +23,7 @@ export const AuthProvider = ({ children }) => {
             setPermissions(decodeToken.permission);
         }
         console.log("Workss");
+        setAuthLoading(false);
     }, []);
 
     const logIn = (data) => {
@@ -56,7 +58,8 @@ export const AuthProvider = ({ children }) => {
                 logOut,
                 hasPermission,
                 isAuthenticated: !!user,
-                permissions
+                permissions,
+                authLoading
             }}
         >
             {children}
